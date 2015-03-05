@@ -11,7 +11,7 @@ measurement of DNA concentration in the 96-well plates after collection of the
 cDNAs from the capture array.  It then presents some [commands](#functions) to
 import the data in `R`, and uses them to produce a consolidated
 [table](#output-format) for the five runs, that is [saved](#save-data) for
-integrated analysis later.  Finally, some [quality controls](#qc) are ran,
+integrated analysis later.  Finally, some [quality controls](#qc) are run,
 showing strong variation between runs for the DNA yield after the on-chip PCR.
 An inspection of the [standard curves](#standard-curves) rules out that it
 could be a simple problem of measurement.
