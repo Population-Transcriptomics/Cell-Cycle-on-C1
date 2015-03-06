@@ -10,3 +10,6 @@ This repository contains the contributions of the following people
    particular on the fluorescence values measured with the Cellomics software,
    the PCR yields measured by fluorometry, the quantification of standard RNA
    sequences, and the combined analysis of this.
+
+ * Elo Madissoon <elo.madissoon@gmail.com>: Wrote the ImageJ macro, used this 
+   for measuring fluorescence values and prepared analysis on the data.
