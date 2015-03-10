@@ -11,7 +11,12 @@ Required software
 
 ### `R` libraries:
 
-`gdata`, `ggplot2`, `knitr`, `reshape`.
+`gdata`, `ggplot2`, `knitr`, `reshape`, `XML`
 
 In Debian, some of these libraries are provided by the packages `r-cran-gdata`,
 `r-cran-ggplot2`, `r-cran-reshape`
+
+### Other software:
+
+`lftp`
+
