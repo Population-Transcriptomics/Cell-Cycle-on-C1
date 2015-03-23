@@ -1,0 +1,176 @@
+```{r echo=FALSE}
+options(width=100)
+knitr::opts_knit$set(verbose = TRUE)
+```
+
+Quality control of HiSeq runs before alignment
+==============================================
+
+Summary
+-------
+
+ - Yield is comparable between runs.
+
+ - There is an obvious defect, however, which is the mixing of rows `08` and `09`
+   in run `1772-064-103`.  This is indicated by a `FALSE` value in the column
+   `HiSeq_QC`.
+
+ - Libraries with less than 100,000 pairs are also very likely to be
+   problematic and are flagged `FALSE` in `HiSeq_QC`.
+
+
+Datasets
+--------
+
+The `Demultiplex_Stats.htm` files from the _Basecall Stats_ directory of the
+HiSeq runs were copied and renamed with their run ID, opened in a web browser,
+and the table inside was pasted in LibreOffice, edited and saved in _xslx_
+format before loading into `R`.
+
+ - `1772-067-038` and `1772-067-039` C1 runs: HiSeq run ID [140305_700213F_0043_BH0TMJADXX](./140305_700213F_0043_BH0TMJADXX.html).
+
+ - `1772-064-103` C1 run: HiSeq run ID [140124_SN7001394_0068_AH0TK5ADXX](./140124_SN7001394_0068_AH0TK5ADXX.html).
+
+ - `1772-062-248` and `1772-062-249` C1 runs: HiSeq run ID [131205_SN7001394_0065_BH0BG5ADXX](./131205_SN7001394_0065_BH0BG5ADXX.html).
+
+The edition in LibreOffice was as follows:
+
+ - Added a `Run` column, with the C1 run ID.
+
+ - Renamed the `Sample ID` value for the _Undetermined_ sequences `Undetermined`.
+   Example: `lane1` renamed to `Undetermined`.
+
+ - For the same lines, renamed the `Description` value to our facility's internal ID.
+   Example: `Clusters with unmatched barcodes for lane 1 ` renamed to `LS2079`.
+
+ - For 1772-062-248 and 1772-062-249, entered the `Sample ID` by hand, using
+   same indexes as for the libraries sequenced later.
+
+The files were then collated in a single Excel file, `HiSeq.xslx`.
+
+
+Quality control
+---------------
+
+```{r message=FALSE}
+library(gdata)
+library(ggplot2)
+```
+
+### Load data
+
+```{r}
+qc <- read.xls( "HiSeq.xlsx",
+  col.names=c(
+    'Run',
+    'Lane',
+    'Sample.ID',
+    'Sample.Ref',
+    'Index',
+    'Description',
+    'Control',
+    'Project',
+    'Yield',
+    'Percent.PF',
+    'Reads',
+    'raw.clusters.per.lane',
+    'Perfect.Index.Reads',
+    'One.Mismatch.Index.Reads',
+    'Q30.bases',
+    'Mean.Quality.Score'))
+```
+
+The `Sample.ID` column contains identifiers made of the library ID attributed
+by our facility, followed by `-`, follow by a well ID in 96-well plate format.
+
+`row` and `column` refer to the coordinates in the 96-well plates (where the multiplexing reaction
+was done).
+
+```{r}
+qc$Lane <- factor(qc$Lane)
+qc$Well <- factor(sub('RNhi.....-', '', qc$Sample.ID))
+qc[qc$Well == 'Undetermined', 'Well'] <- NA
+qc$row    <- factor(substr(qc$Well, 1, 1))
+qc$column <- factor(substr(qc$Well, 2, 3))
+qc$Q30.bases <- as.numeric(as.character(qc$Q30.bases))
+qc$Mean.Quality.Score <- as.numeric(as.character(qc$Mean.Quality.Score))
+qc$Library <- sub('-...','', qc$Sample.ID)
+qc$Library <- factor(qc$Library)
+
+summary(qc)
+```
+
+
+### Quantity of demultiplexed and unmatched paired-end reads.
+
+The report files also provide information on non-demultiplexed reads, in lines
+where `Sample.ID` equals `Undetermined`.  This creates `NA` values in the
+`Well` column.
+
+```{r}
+Unmatched <- factor(is.na(qc$Well), labels=c('Demultiplexed', 'Unmatched'))
+tapply(qc$Reads, list(qc$Run, Unmatched), sum) / 2
+```
+
+The numbers are divided by two because the number of reads reported is
+paired-end (two reads per pair).
+
+
+### Looking for run bias
+
+```{r HiSeq_run_comparison, dev='svg'}
+qplot(data = qc[!is.na(qc$Well),], Run, Reads, geom = "boxplot")
+```
+
+### Looking for position bias in the plates
+
+Do not worry too much about the shape of the boxplots, this is because there
+are few points per run (8 for columns and 12 for rows).
+
+```{r HiSeq_plate_comparison, dev='svg'}
+qplot(data = qc[!is.na(qc$Well),], row, Reads, geom = "boxplot") + facet_wrap(~Run)
+qplot(data = qc[!is.na(qc$Well),], column, Reads, geom = "boxplot") + facet_wrap(~Run)
+```
+
+In C1 run `1772-064-103`, the plate column `09` has clearly been pipetted in
+row `08`.  Both of them are flagged `FALSE` in a table column called `HiSeq_QC`
+to mark that fact.
+
+```{r}
+qc$HiSeq_QC <- TRUE
+qc[qc$Run == '1772-064-103' & grepl('0[89]', qc$Well), 'HiSeq_QC'] <- FALSE
+```
+
+### Libraries with less than 100,000 pairs.
+
+The libraries with less than 200,000 reads (one pair is two reads) are likely
+to be problematic or too shallow in comparison with the others, and therefore
+flagged `FALSE` for the quality control.
+
+```{r}
+qc[qc$Reads < 200000, 'HiSeq_QC'] <- FALSE
+```
+
+Export table in CSV format.
+---------------------------
+
+Drop columns that contain the same value for each library.
+
+```{r}
+qc <- qc[,-grep('One.Mismatch.Index.Reads', colnames(qc))]
+qc <- qc[,-grep('Control', colnames(qc))]
+```
+
+Rename `Description` to `LSID` to avoid name conflicts with the fluorescence data.
+
+```{r}
+colnames(qc) <- sub('Description', 'LSID', colnames(qc))
+```
+
+Write the table in CSV format.
+
+```{r}
+qc$cell_id <- paste(qc$Run, qc$Well, sep = "_")
+summary(qc)
+write.csv(file='HiSeq.csv', qc, row.names=FALSE)
+```
