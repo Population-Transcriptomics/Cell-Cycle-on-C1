@@ -1,80 +1,92 @@
+```{r echo=FALSE}
+options(width=120)
+knitr::opts_knit$set(verbose = TRUE)
+```
+
 DDBJ data management
 ====================
 
-Please install lftp if you are not already using it.
-First create a directory in which to download all the 944 compressed fastq files.
+The following description is only suitable for the download and renaming of fastq file stored at [DDBJ](http://trace.ddbj.nig.ac.jp/DRASearch/submission?acc=DRA002399). However, the same data can be obtained from [NCBI](http://www.ncbi.nlm.nih.gov/Traces/sra/?study=DRP002435) and [EBI](https://www.ebi.ac.uk/ena/data/view/DRP002435) 
+
+First create a directory in which to download all the 945 compressed fastq files.
 
 ```{r download, engine='sh', eval=FALSE}
+# create a directory for data download, go to that directory and start the download of all fastq files from the 
 mkdir 'yourdirectoryname'; cd 'yourdirectoryname'
 lftp ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399
-mget */*.bz2
+mget -c */*.bz2
 ```
 
-The following Script creates a table that has 6 columns: "Library",  "Well", "DDBJ", "Barcode", "ExperimentAccession", "cell_id" and 472 rows. Each row represents a single cell. 
+The following script creates a table that has 6 columns: "Library",  "Well", "DDBJ", "Index", "ExperimentAccession", "cell_id", and 472 rows. Each row represents a single cell. 
 
-- **"Library"**: the Flowcell run ID (e.g. "RNhi10371")
-- **"Well"**: the coordinate of a cell on the 96-well plate after transfer of cDNA from the C1 IFC 
+- **"Library"**: the sequencing flowcell run ID (e.g. "RNhi10371")
+- **"Well"**: the coordinate of a cell on the 96-well plate after transfer of cDNA from the C1 capture array 
 - **"DDBJ"**: the unique cell ID given to each cell by DDBJ
-- **"Barcode"**: the left and right read (2 x 8 bases) barcode used to pool 96 cells per run
+- **"Index"**: the left and right read (2 x 8 bases) barcode used to pool 96 cells per run
 - **"ExperimentAccession"**: the name given by DDBJ that is the equivalent of the "Library" run ID 
-- **"Run"**: the C1 IFC ID 
+- **"Run"**: the C1 capture array ID 
 - **"cell_id"**: a unique identifier for each single cell, that is created by combining the C1 IFC ID and the "Well" with an underscore delimeter
 
 ```{r parsing the XML for cell identifiers}
+# load required packages
 library(XML)
-library(reshape2)
+library(reshape)
+# parse the xml tree structure into R
 DDBJ <- xmlTreeParse("ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399/DRA002399.experiment.xml", useInternal=T)
+# make the nodes of the tree readable with common R commands
 top <- xmlRoot(DDBJ)
+# finds and returns values of a specific node as a list
 RunID <- xpathApply(top, "//LIBRARY_NAME", xmlValue)
 # get DDBJ Run accession number
 Experiment  <- xpathApply(top, "//EXPERIMENT", xmlAttrs)
 Accession <- lapply(1:5, function(x) Experiment[[x]][1])
+# get the cell barcodes
 Barcodes <- xpathApply(top, "//LIBRARY_CONSTRUCTION_PROTOCOL", xmlValue)
-filter1 <- gsub("\n", "", as.character(Barcodes))
-filter2 <- strsplit(filter1, split=',')
-names(filter2) <- paste(RunID, Accession, sep="_")
+# 
+filter <- gsub("\n", "", as.character(Barcodes))
+filter <- strsplit(filter, split=',')
+names(filter) <- paste(RunID, Accession, sep="_")
 # load table that links well number with barcodes
-WellID <- read.table("WellToBarcodes.txt", header=T, stringsAsFactors=F)
-
+# the barcode sequences were taken from the Fluidigm protocol 'PN 100-5950 A1' 
+WellID <- read.csv("WellToBarcodes.csv", header=T, stringsAsFactors=F)
 # make list of string vectors
-filter3 <- lapply(1:5, function(x) as.vector(filter2[x]))
+filter <- lapply(1:5, function(x) as.vector(filter[x]))
 # create combined table in long format with run ID and DDBJ ID and barcode
-long1 <- c()
-y <- data.frame()
-x <- c()
-for (i in filter3) {
-long1 <- melt(i)
-y <- rbind(y, long1)
-x <- x+1
-}
-link <- y; names(link) <- c("DDBJBarcode", "Library")
+link <- melt(filter)[,1:2]; names(link) <- c("DDBJIndex", "Library")
 # remove white spaces
 link <- as.data.frame(apply(link, 2, function(x) gsub('\\s+', '',x)))
-# separate DDBJ name and barcode
-intermediate <- as.data.frame(do.call(rbind, sapply(1:length(link$DDBJBarcode), function(x) strsplit(as.character(link$DDBJBarcode)[x], split=":"))))
-final <- cbind(link, intermediate)
-final <- final[,-1]; names(final) <- c("Library", "DDBJ", "Barcode")
-# associate each barcode from the DDBJ XML with the well coordinate
-final$Well <- WellID$Well[match(as.character(final$Barcode), as.character(WellID$Barcode))]
-# split RunID and ExperiemntAccession
-intermediate2 <- as.data.frame(do.call(rbind, sapply(1:length(final$Library), function(x) strsplit(as.character(final$Library)[x], split="_")))); names(intermediate2) <- c("Library", "ExperimentAccession")
-final <- cbind(final[,-1], intermediate2)
-# load combined metadata table to link to cell IDs
-LibraryToC1ID <- read.table("LibraryToC1.txt", header=T, stringsAsFactors=F)
+# separate DDBJ name and Index
+intermediate <- read.table(text=as.character(link$DDBJIndex), sep=':')
+final <- data.frame(link[,-1], intermediate); names(final) <- c("Library", "DDBJ", "Index")
+# associate each Index from the DDBJ XML with the Well coordinates
+final$Well <- WellID$Well[match(as.character(final$Index), as.character(WellID$Index))]
+# split RunID and ExperimentAccession in column 1 of final
+intermediate <- read.table(text=as.character(final$Library), sep='_'); names(intermediate) <- c("Library", "ExperimentAccession")
+final <- cbind(final[,-1], intermediate)
+# link Library with Run
+LibraryToC1ID <- c(RNhi10371="1772-062-248", RNhi10372="1772-062-249", RNhi10395="1772-064-103", RNhi10396="1772-067-038", RNhi10397="1772-067-039")
 # get cell IDs for DDBJ names
-final <- merge(final, LibraryToC1ID, by=c("Library", "Well"))
+final$Run <- as.character(sapply(final$Library, function(x) LibraryToC1ID[x]))
 final$cell_id <- paste(final$Run, final$Well, sep="_")
 head(final)
 ```
-```{r, eval=F}
+
+```{r, eval=T}
 # write final output table to current working directory
-write.table(final, "DDBJLink.txt", sep="\t", row.names=T, col.names=T, quote=F)
+write.csv(final, "DDBJLink.csv", row.names=F)
 ```
 
-The next part utilises the file "DDBJLink.txt" to rename downloaded fastq.bz2 files with the unique "cell_id".
-Adjust the below script to the directory in which the "DDBJLink.txt" is located. Furthermore your working directory should be 'yourdirectoryname' where all the dowloaded fastq.bz2 files are saved. 
+The next part utilises the file "DDBJLink.csv" to rename downloaded fastq.bz2 files with the unique "cell_id".
+Adjust the below script to the directory in which the "DDBJLink.csv" is located. Furthermore, your working directory should be 'yourdirectoryname' where all the dowloaded fastq.bz2 files are saved. 
 
 ```{r renaming the fastq.bz2 files with cell_id, engine='sh', eval=F}
-# the code below replaces the "DDBJ" name of each fastq.bz2 fiel pair with the corresponding "cell_id"
-cut -f4,8 DDBJLink.txt | sed 1d | while read from to ; do mv ${from}_1.fastq.bz2 ${to}.1.fastq.bz2 ; mv ${from}_2.fastq.bz2 ${to}.2.fastq.bz2; done
+# the code below replaces the "DDBJ" name of each fastq.bz2 file pair with the corresponding "cell_id"
+cut -f4,8 DDBJLink.csv | sed 1d | while read from to ; do mv ${from}_1.fastq.bz2 ${to}.1.fastq.bz2 ; mv ${from}_2.fastq.bz2 ${to}.2.fastq.bz2; done
+```
+
+The file fastq_md5sum.csv contains the md5 checksums for all fastq.bz2 files after renaming and can be used for validity checks by comparing the md5sums of your local renamed files.
+
+```{r md5sum check, engine='sh', eval=F}
+# execute in the directory with the renamed files
+ls -lh | awk '{print $9}' | xargs md5sum >> ../fastq_md5sums.txt
 ```

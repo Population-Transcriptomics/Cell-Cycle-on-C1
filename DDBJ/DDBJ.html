@@ -181,107 +181,100 @@ hljs.initHighlightingOnLoad();
 <body>
 <h1>DDBJ data management</h1>
 
-<p>Please install lftp if you are not already using it.
-First create a directory in which to download all the 944 compressed fastq files.</p>
+<p>The following description is only suitable for the download and renaming of fastq file stored at <a href="http://trace.ddbj.nig.ac.jp/DRASearch/submission?acc=DRA002399">DDBJ</a>. However, the same data can be obtained from <a href="http://www.ncbi.nlm.nih.gov/Traces/sra/?study=DRP002435">NCBI</a> and <a href="https://www.ebi.ac.uk/ena/data/view/DRP002435">EBI</a> </p>
 
-<pre><code class="sh">mkdir &#39;yourdirectoryname&#39;; cd &#39;yourdirectoryname&#39;
+<p>First create a directory in which to download all the 945 compressed fastq files.</p>
+
+<pre><code class="sh"># create a directory for data download, go to that directory and start the download of all fastq files from the 
+mkdir &#39;yourdirectoryname&#39;; cd &#39;yourdirectoryname&#39;
 lftp ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399
-mget */*.bz2
+mget -c */*.bz2
 </code></pre>
 
-<p>The following Script creates a table that has 6 columns: &ldquo;Library&rdquo;,  &ldquo;Well&rdquo;, &ldquo;DDBJ&rdquo;, &ldquo;Barcode&rdquo;, &ldquo;ExperimentAccession&rdquo;, &ldquo;cell_id&rdquo; and 472 rows. Each row represents a single cell. </p>
+<p>The following script creates a table that has 6 columns: &ldquo;Library&rdquo;,  &ldquo;Well&rdquo;, &ldquo;DDBJ&rdquo;, &ldquo;Index&rdquo;, &ldquo;ExperimentAccession&rdquo;, &ldquo;cell_id&rdquo;, and 472 rows. Each row represents a single cell. </p>
 
 <ul>
-<li><strong>&ldquo;Library&rdquo;</strong>: the Flowcell run ID (e.g. &ldquo;RNhi10371&rdquo;)</li>
-<li><strong>&ldquo;Well&rdquo;</strong>: the coordinate of a cell on the 96-well plate after transfer of cDNA from the C1 IFC </li>
+<li><strong>&ldquo;Library&rdquo;</strong>: the sequencing flowcell run ID (e.g. &ldquo;RNhi10371&rdquo;)</li>
+<li><strong>&ldquo;Well&rdquo;</strong>: the coordinate of a cell on the 96-well plate after transfer of cDNA from the C1 capture array </li>
 <li><strong>&ldquo;DDBJ&rdquo;</strong>: the unique cell ID given to each cell by DDBJ</li>
-<li><strong>&ldquo;Barcode&rdquo;</strong>: the left and right read (2 x 8 bases) barcode used to pool 96 cells per run</li>
+<li><strong>&ldquo;Index&rdquo;</strong>: the left and right read (2 x 8 bases) barcode used to pool 96 cells per run</li>
 <li><strong>&ldquo;ExperimentAccession&rdquo;</strong>: the name given by DDBJ that is the equivalent of the &ldquo;Library&rdquo; run ID </li>
-<li><strong>&ldquo;Run&rdquo;</strong>: the C1 IFC ID </li>
+<li><strong>&ldquo;Run&rdquo;</strong>: the C1 capture array ID </li>
 <li><strong>&ldquo;cell_id&rdquo;</strong>: a unique identifier for each single cell, that is created by combining the C1 IFC ID and the &ldquo;Well&rdquo; with an underscore delimeter</li>
 </ul>
 
-<pre><code class="r">library(XML)
+<pre><code class="r"># load required packages
+library(XML)
 </code></pre>
 
 <pre><code>## Warning: package &#39;XML&#39; was built under R version 3.1.2
 </code></pre>
 
-<pre><code class="r">library(reshape2)
-</code></pre>
-
-<pre><code>## Warning: package &#39;reshape2&#39; was built under R version 3.1.2
-</code></pre>
-
-<pre><code class="r">DDBJ &lt;- xmlTreeParse(&quot;ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399/DRA002399.experiment.xml&quot;, useInternal=T)
+<pre><code class="r">library(reshape)
+# parse the xml tree structure into R
+DDBJ &lt;- xmlTreeParse(&quot;ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399/DRA002399.experiment.xml&quot;, useInternal=T)
+# make the nodes of the tree readable with common R commands
 top &lt;- xmlRoot(DDBJ)
+# finds and returns values of a specific node as a list
 RunID &lt;- xpathApply(top, &quot;//LIBRARY_NAME&quot;, xmlValue)
 # get DDBJ Run accession number
 Experiment  &lt;- xpathApply(top, &quot;//EXPERIMENT&quot;, xmlAttrs)
 Accession &lt;- lapply(1:5, function(x) Experiment[[x]][1])
+# get the cell barcodes
 Barcodes &lt;- xpathApply(top, &quot;//LIBRARY_CONSTRUCTION_PROTOCOL&quot;, xmlValue)
-filter1 &lt;- gsub(&quot;\n&quot;, &quot;&quot;, as.character(Barcodes))
-filter2 &lt;- strsplit(filter1, split=&#39;,&#39;)
-names(filter2) &lt;- paste(RunID, Accession, sep=&quot;_&quot;)
+# 
+filter &lt;- gsub(&quot;\n&quot;, &quot;&quot;, as.character(Barcodes))
+filter &lt;- strsplit(filter, split=&#39;,&#39;)
+names(filter) &lt;- paste(RunID, Accession, sep=&quot;_&quot;)
 # load table that links well number with barcodes
-WellID &lt;- read.table(&quot;WellToBarcodes.txt&quot;, header=T, stringsAsFactors=F)
-
+# the barcode sequences were taken from the Fluidigm protocol &#39;PN 100-5950 A1&#39; 
+WellID &lt;- read.csv(&quot;WellToBarcodes.csv&quot;, header=T, stringsAsFactors=F)
 # make list of string vectors
-filter3 &lt;- lapply(1:5, function(x) as.vector(filter2[x]))
+filter &lt;- lapply(1:5, function(x) as.vector(filter[x]))
 # create combined table in long format with run ID and DDBJ ID and barcode
-long1 &lt;- c()
-y &lt;- data.frame()
-x &lt;- c()
-for (i in filter3) {
-long1 &lt;- melt(i)
-y &lt;- rbind(y, long1)
-x &lt;- x+1
-}
-link &lt;- y; names(link) &lt;- c(&quot;DDBJBarcode&quot;, &quot;Library&quot;)
+link &lt;- melt(filter)[,1:2]; names(link) &lt;- c(&quot;DDBJIndex&quot;, &quot;Library&quot;)
 # remove white spaces
 link &lt;- as.data.frame(apply(link, 2, function(x) gsub(&#39;\\s+&#39;, &#39;&#39;,x)))
-# separate DDBJ name and barcode
-intermediate &lt;- as.data.frame(do.call(rbind, sapply(1:length(link$DDBJBarcode), function(x) strsplit(as.character(link$DDBJBarcode)[x], split=&quot;:&quot;))))
-final &lt;- cbind(link, intermediate)
-final &lt;- final[,-1]; names(final) &lt;- c(&quot;Library&quot;, &quot;DDBJ&quot;, &quot;Barcode&quot;)
-# associate each barcode from the DDBJ XML with the well coordinate
-final$Well &lt;- WellID$Well[match(as.character(final$Barcode), as.character(WellID$Barcode))]
-# split RunID and ExperiemntAccession
-intermediate2 &lt;- as.data.frame(do.call(rbind, sapply(1:length(final$Library), function(x) strsplit(as.character(final$Library)[x], split=&quot;_&quot;)))); names(intermediate2) &lt;- c(&quot;Library&quot;, &quot;ExperimentAccession&quot;)
-final &lt;- cbind(final[,-1], intermediate2)
-# load combined metadata table to link to cell IDs
-LibraryToC1ID &lt;- read.table(&quot;LibraryToC1.txt&quot;, header=T, stringsAsFactors=F)
+# separate DDBJ name and Index
+intermediate &lt;- read.table(text=as.character(link$DDBJIndex), sep=&#39;:&#39;)
+final &lt;- data.frame(link[,-1], intermediate); names(final) &lt;- c(&quot;Library&quot;, &quot;DDBJ&quot;, &quot;Index&quot;)
+# associate each Index from the DDBJ XML with the Well coordinates
+final$Well &lt;- WellID$Well[match(as.character(final$Index), as.character(WellID$Index))]
+# split RunID and ExperimentAccession in column 1 of final
+intermediate &lt;- read.table(text=as.character(final$Library), sep=&#39;_&#39;); names(intermediate) &lt;- c(&quot;Library&quot;, &quot;ExperimentAccession&quot;)
+final &lt;- cbind(final[,-1], intermediate)
+# link Library with Run
+LibraryToC1ID &lt;- c(RNhi10371=&quot;1772-062-248&quot;, RNhi10372=&quot;1772-062-249&quot;, RNhi10395=&quot;1772-064-103&quot;, RNhi10396=&quot;1772-067-038&quot;, RNhi10397=&quot;1772-067-039&quot;)
 # get cell IDs for DDBJ names
-final &lt;- merge(final, LibraryToC1ID, by=c(&quot;Library&quot;, &quot;Well&quot;))
+final$Run &lt;- as.character(sapply(final$Library, function(x) LibraryToC1ID[x]))
 final$cell_id &lt;- paste(final$Run, final$Well, sep=&quot;_&quot;)
 head(final)
 </code></pre>
 
-<pre><code>##     Library Well      DDBJ           Barcode ExperimentAccession
-## 1 RNhi10371  A01 DRR028211 TAAGGCGA-TAGATCGC           DRX019711
-## 2 RNhi10371  A02 DRR028171 CGTACTAG-TAGATCGC           DRX019711
-## 3 RNhi10371  A03 DRR028147 AGGCAGAA-TAGATCGC           DRX019711
-## 4 RNhi10371  A04 DRR028227 TCCTGAGC-TAGATCGC           DRX019711
-## 5 RNhi10371  A05 DRR028195 GGACTCCT-TAGATCGC           DRX019711
-## 6 RNhi10371  A06 DRR028219 TAGGCATG-TAGATCGC           DRX019711
-##            Run          cell_id
-## 1 1772-062-248 1772-062-248_A01
-## 2 1772-062-248 1772-062-248_A02
-## 3 1772-062-248 1772-062-248_A03
-## 4 1772-062-248 1772-062-248_A04
-## 5 1772-062-248 1772-062-248_A05
-## 6 1772-062-248 1772-062-248_A06
+<pre><code>##        DDBJ             Index Well   Library ExperimentAccession          Run          cell_id
+## 1 DRR028133 AAGAGGCA-AAGGAGTA  G11 RNhi10371           DRX019711 1772-062-248 1772-062-248_G11
+## 2 DRR028134 AAGAGGCA-ACTGCATA  F11 RNhi10371           DRX019711 1772-062-248 1772-062-248_F11
+## 3 DRR028135 AAGAGGCA-AGAGTAGA  D11 RNhi10371           DRX019711 1772-062-248 1772-062-248_D11
+## 4 DRR028136 AAGAGGCA-CTAAGCCT  H11 RNhi10371           DRX019711 1772-062-248 1772-062-248_H11
+## 5 DRR028137 AAGAGGCA-CTCTCTAT  B11 RNhi10371           DRX019711 1772-062-248 1772-062-248_B11
+## 6 DRR028138 AAGAGGCA-GTAAGGAG  E11 RNhi10371           DRX019711 1772-062-248 1772-062-248_E11
 </code></pre>
 
 <pre><code class="r"># write final output table to current working directory
-write.table(final, &quot;DDBJLink.txt&quot;, sep=&quot;\t&quot;, row.names=T, col.names=T, quote=F)
+write.csv(final, &quot;DDBJLink.csv&quot;, row.names=F)
 </code></pre>
 
-<p>The next part utilises the file &ldquo;DDBJLink.txt&rdquo; to rename downloaded fastq.bz2 files with the unique &ldquo;cell_id&rdquo;.
-Adjust the below script to the directory in which the &ldquo;DDBJLink.txt&rdquo; is located. Furthermore your working directory should be &#39;yourdirectoryname&#39; where all the dowloaded fastq.bz2 files are saved. </p>
+<p>The next part utilises the file &ldquo;DDBJLink.csv&rdquo; to rename downloaded fastq.bz2 files with the unique &ldquo;cell_id&rdquo;.
+Adjust the below script to the directory in which the &ldquo;DDBJLink.csv&rdquo; is located. Furthermore, your working directory should be &#39;yourdirectoryname&#39; where all the dowloaded fastq.bz2 files are saved. </p>
 
-<pre><code class="sh"># the code below replaces the &quot;DDBJ&quot; name of each fastq.bz2 fiel pair with the corresponding &quot;cell_id&quot;
-cut -f4,8 DDBJLink.txt | sed 1d | while read from to ; do mv ${from}_1.fastq.bz2 ${to}.1.fastq.bz2 ; mv ${from}_2.fastq.bz2 ${to}.2.fastq.bz2; done
+<pre><code class="sh"># the code below replaces the &quot;DDBJ&quot; name of each fastq.bz2 file pair with the corresponding &quot;cell_id&quot;
+cut -f4,8 DDBJLink.csv | sed 1d | while read from to ; do mv ${from}_1.fastq.bz2 ${to}.1.fastq.bz2 ; mv ${from}_2.fastq.bz2 ${to}.2.fastq.bz2; done
+</code></pre>
+
+<p>The file fastq_md5sum.csv contains the md5 checksums for all fastq.bz2 files after renaming and can be used for validity checks by comparing the md5sums of your local renamed files.</p>
+
+<pre><code class="sh"># execute in the directory with the renamed files
+ls -lh | awk &#39;{print $9}&#39; | xargs md5sum &gt;&gt; ../fastq_md5sums.txt
 </code></pre>
 
 </body>
