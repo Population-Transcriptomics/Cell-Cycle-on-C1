@@ -8,57 +8,53 @@ library(knitr)
 opts_chunk$set(fig.width=10)
 options(width=120)
 
-scriptName="SetArea_Measure_UserConfirm.ijm"
-pdfName="Usage_of_ImageJ_macro_SetArea_Measure_UserConfirm.pdf"
-resultsErrorName="Results_SetArea_Measure_UserConfirm.txt"
-resultsNoErrorName="Results_SetArea_Measure_UserConfirm_NoError.txt"
+scriptname <- "SetArea_Measure_UserConfirm.ijm"
+pdfname <- "Usage_of_ImageJ_macro_SetArea_Measure_UserConfirm.pdf"
+results_em <- "Results_SetArea_Measure_UserConfirm_EM.txt"
+results_mb <- "Results_SetArea_Measure_UserConfirm_MB.txt"
 ```
 
-## Summary
+##Summary
 
-Images were taken of Fucci cells on C1 before lysis in three channels: bright field, green and red. [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) (change to Dryad link later) in the Cellomics C01 file format were used for measuring fluorescence and reporting errors in [ImageJ](http://imagej.net/Welcome) version 1.49m by using a macro [`r scriptName`](`r scriptName`). The usage of this macro is illustrated in the accompanying PDF file [`r pdfName`](`r pdfName`). The macro will ask the user to select a folder, which contains raw image files. Following procedures are done:  
+Images were taken of FUCCI cells on C1 before lysis in three channels: bright field, green and red. [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the C01 format were used for measuring fluorescence and reporting errors in [ImageJ](http://imagej.net/Welcome) version 1.49m by using a macro [`r scriptname`](`r scriptname`). The usage of this macro is illustrated in the accompanying PDF file [`r pdfname`](`r pdfname`). The macro will ask the user to select a folder, which contains raw image files. Following procedures are done:  
 
-* Open images one by one: first bright field, followed by green and red channel images
-* Draw circular area on the bright field image with a diameter of 13 pixels
+* Open images one by one: first bright field, followed by green and followed by red channel images.
+* Draw circular area on the bright field image with the diameter of 13 pixels
 * Open dialogue box and and wait for user to drag the circle to the position of the cell on the brigh field image
-* Measure fluorescence intensities on this defined area for the green and red channel, and measure background intensity levels (100 x 50 pixels adjacent to the cell, unless position is changed by the user)
-* Open dialogue box and ask the user for error reporting: comment and error type
-* Record the file name, coordinates, Size of area, Mean intnsity, Minimum and Maximum intensities and Error report
+* Measure fluorescence intensities on this defined area for green and red channels, and measure background intensity levels 100 x 50 pixels adjacent to the cell unless position is changed by the user
+* Open dialogue box and ask the user for error report: comment and error type.
+* Record the file name, coordinates, Size of area, Mean intnsity, Standard Deviation, Minimum and Maximum intensities and Error report
 * Repeat the previous steps for every set of three images in the folder
 
-The results are saved in a table [`r resultsErrorName`](`r resultsErrorName`). The same measurements were performed again without recording the error in [`r resultsNoErrorName`](`r resultsNoErrorName`).  
+The ImageJ macro was run independently by Elo Madissoon, EM (file [`r results_em`](`r results_em`)) and Michael Böttcher, MB (file [`r results_mb`](`r results_mb`)). The current document explains the [column names](#names) in the results files, analyzes the [consistency](#consistency) of the measurements, compares and finds consensus in the [error reporting](#errorreport) and gives an [overview](#overview) of the final values.
 
-The current document explains the [column names](#names) in the results files, analyzes the [consistency](#consistency) of the measurements, [subtracts the background](#reduction) intensity and gives an [overview](#overview) of the final values.
+###<a name='names'>Column names</a>
 
-### <a name='names'>Column names</a>
+####Label
+Identifier of the well, which is the common part of the filename for all channels (bright field, red and green)
 
-#### Label
-Identifier of the well, which is the common part of the file name for all channels (BF, red and green)
+####Cellcoord.X and Cellcoord.Y
+Pixel coordinates of the upper left corner of the smallest rectangle that completely contain the selection area.
 
-#### Cellcoord.X and Cellcoord.Y
-Pixel coordinates of the upper left corner of the smallest rectangle that completely contains the selection area.
-
-#### area
+####area
 Size of the selection area.
 
-#### mean, std, min, max
+####mean, std, min, max
 Mean, standard deviation, minimum and maximum fluorescence intensity in the selection. Corresponding measurements to the background area (adjacent to the cell) when prefix is "bg." and to green channel or red channel when the suffix is ".ch2" or ".ch3" correspondingly.
 
-#### Error
-Type of the error in the file with error report. Either "0-No Error" (default), "1-No cell", "2-Debris", "3-OutOfFocus", "4-MultipleCells"
+####Error
+Type of the error in the file with error report. Either "0-No Error" (default), "1-No cell", "2-Debris", "3-OutOfFocus","4-MultipleCells"
 
-#### Comment
-Free text. Mostly commented if not sure about error type. Defaults to "No comment"
+####Comment
+Free text. Mostly commented if not sure about error type. Deafults to "No comment"
 
-### <a name='consistency'>Consistency of ImageJ measurements</a>
 
-Load packages to the workspace, load the fluroescence results files. Summarize the content.
+###<a name='consistency'>Consistency of ImageJ measurements</a>
+
+Load the fluorescence results files. Summarize the content.
 
 ```{r}
-library(ggplot2)
-library(gridExtra)
-library(plyr)
-#Pairwise correlation matrix from SourceForge.net
+#Pairwise correlation matrix from SourceForge.net:
 panel.cor <- function(x, y, digits=2, prefix="", cex.cor) 
 {
     usr <- par("usr"); on.exit(par(usr)) 
@@ -79,151 +75,126 @@ panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
 }
 
 
-resErr=read.table(resultsErrorName,header=TRUE,sep="\t",row.names=1)
-res=read.table(resultsNoErrorName,header=TRUE,sep="\t",row.names=1)
-summary(resErr)
-colnames(res)
+em=read.table(results_em,header=TRUE,sep="\t",row.names=1)
+mb=read.table(results_mb,header=TRUE,sep="\t",row.names=1)
+summary(em)
+colnames(mb)
 ```
 
 
-The cell location was set manually for every bright field image. The correlation of the cell coordinates will reflect reproducibility of the cell location determination. The correlation in fluorescence measures reflects reproducibility of the results. Correlation between Cell coordinates and fluroescence values are plotted, colored by Run.
+The cell location was set manually every time on the bright field image. The correalation of the cell coordinates will reflect reproducibility of the cell location determination. The correlation in fluorescence measures reflects reproducibility of the results. Correlation between cell coordinates and fluorescence values are plotted, colored by Run.
 
 ```{r}
-sub=substr(res$Label, 1, 12)
-mfrow.orig <- par(mfrow=c(1, 2))
-plot(resErr$Cellcoord.X, res$Cellcoord.X, col=as.factor(sub), main="Correlation of the X-coordinates")
-legend("topleft", legend=c(levels(as.factor(sub))),pch=1, col=c(1:5))
-plot(resErr$Cellcoord.Y, res$Cellcoord.Y, col=as.factor(sub), main="Correlation of the Y-coordinates")
-legend("topleft", legend=c(levels(as.factor(sub))), pch=1, col=c(1:5))
-plot(resErr$mean.ch2, res$mean.ch2, col=as.factor(sub), main="Correlation of means in Ch2")
-legend("topleft", legend=c(levels(as.factor(sub))), pch=1, col=c(1:5))
-plot(resErr$mean.ch3, res$mean.ch3,col=as.factor(sub), main="Correlation of means in Ch3")
-legend("topleft", legend=c(levels(as.factor(sub))), pch=1,col=c(1:5))
+subb <- substr(em$Label,1,12)
+mfrow.orig <- par(mfrow=c(1,2))
+plot(em$Cellcoord.X,mb$Cellcoord.X,col=as.factor(subb),main="Correlation of the X-coordinates",xlab="EM",ylab="MB")
+legend("topleft",legend=c(levels(as.factor(subb))),pch=1,col=c(1:5))
+plot(em$Cellcoord.Y,mb$Cellcoord.Y,col=as.factor(subb),main="Correlation of the Y-coordinates",xlab="EM",ylab="MB")
+legend("topleft",legend=c(levels(as.factor(subb))),pch=1,col=c(1:5))
+plot(em$mean.ch2,mb$mean.ch2,main="Correlation of measures in Ch2",xlab="EM",ylab="MB")
+legend("topleft",legend=c(levels(as.factor(subb))),pch=1,col=c(1:5))
+plot(em$mean.ch3,mb$mean.ch3,main="Correlation of measures in Ch3",xlab="EM",ylab="MB")
+legend("topleft",legend=c(levels(as.factor(subb))),pch=1,col=c(1:5))
 ```
 
-The cell location and fluorescence mean values correlate with each other between the two repeated measurements.  
 
-The mean, minimum and maximum values are expected to correlate between themselves in both green and red channel.
+The cell loacation and fluorescence mean values correlate with each other between the two repeated measurements.  
+
+The mean, minimum,maximum and standard deviation are expected to correlate between themselves in both green and red channel and between the two independent scorings.
 
 ```{r, fig.height=7}
-with(res,pairs(cbind(mean.ch2, min.ch2, max.ch2,std.ch2, mean.ch3, min.ch3, max.ch3, std.ch3), lower.panel=panel.smooth, upper.panel=panel.cor))
+pairs(cbind(em.mean=em$mean.ch2,mb.mean=mb$mean.ch2,em.min=em$min.ch2,em.min=mb$min.ch2,em.max=em$max.ch2,mb.max=mb$max.ch2,em.std=em$std.ch2,mb.std=mb$std.ch2), lower.panel=panel.smooth, upper.panel=panel.cor,main="Comparison of values in Channel 2, green")
+pairs(cbind(em.mean=em$mean.ch3,mb.mean=mb$mean.ch3,em.min=em$min.ch3,em.min=mb$min.ch3,em.max=em$max.ch3,mb.max=mb$max.ch3,em.std=em$std.ch3,mb.std=mb$std.ch3), lower.panel=panel.smooth, upper.panel=panel.cor,main="Comparison of values in Channel 3, red")
 ```
 
-Mean, maximum and standard deviation correlate well with each other in both channels. The minimum values are not correlating. This can be explained by a different distribution of fluorescence values inside the cell: The middle and nucleus of the cell are more fluorescent, while the membrane of the cell does not have any fluorescence when the image is well focused.  
+Mean, maximum and standard deviation correlate well with each other in both channels for both scorings. The minimum values are not correlating as good. This can be explained by lower range of values and different distribution of fluorescence values inside the cell: The middle and nucleus of the cell is more fluorescent, while the membrane of the cell does not have any fluorescence in well focused images. 
 
-Compare the intensity levels of fluorescence in respect to the error type and background.
+Compare the intensity levels of fluroescence in respect to the error type and background.
 
-```{r}
-mar.orig <- par(mar=c(5.1, 10.0,  4.1, 2.1))
-flBoxplot <- function (X, Y, TITLE)
-  boxplot( X~Y, main=TITLE, las=1, horizontal=TRUE)
-y=c(as.character(resErr$Error), rep("background", nrow(resErr)))
-x.ch2=c(resErr$mean.ch2, resErr$bg.mean.ch2)
-x.ch3=c(resErr$mean.ch3, resErr$bg.mean.ch3)
-flBoxplot(x.ch2, y, "fluorescence by error report, green")
-flBoxplot(x.ch3, y, "fluorescence by error report, red")
-```
+```{r,fig.height=4}
+par(mfrow <- c(2,2))
+mar.orig <- par(mar=c(5.1,10.0, 4.1, 2.1))
 
-The low fluorescence value in wells with error *1-No cell* is expected and is similar to the background levels of fluorescence in both green and red channel. Cells classified as *Debris* could be defragmented cells, which have not lost their fluorescence, therefore the values are varying.  
-There are outliers with very high fluorescence values. Discard these cells.  
-
-Prepare additional columns for Run and Well. Add discard column for wells with errors and outliers.
-
-```{r}
-resErr$Well=substr(resErr$Label,14,16)
-resErr$Run=as.factor(paste(substr(sub,1,4), substr(sub,6,8), substr(sub,10,13), sep="-"))
-resErr$Well=as.factor(resErr$Well)
-resErr$discard=FALSE
-resErr[resErr$Error!="0-No Error"," discard"]=TRUE  
-resErr[resErr$mean.ch3>200, "discard"]=TRUE
-resErr[resErr$mean.ch2>200, "discard"]=TRUE
-```
-
-### Conclusions
-
-The ImageJ macro produces reproducible results in the X and Y coordinates and in the mean values of fluorescence. The mean, standard deviation and maximum values correlate well with each other in both the green and the red channels. Intensities of fluorescence values are as expected in respect to the Error type.
-
-### <a name='reduction'>Background reduction</a>
-
-Background fluorescence in each run was measured. The reduction of all the fluorescence measures was done by the average background measure for that specific run. Average background measurements for each run are subtracted from the cell measurements in each well.
-
-
-```{r}
-#Prepare new columns where the background fluorescence value is reduced
-bg.means <- with(resErr, aggregate(cbind(bg.mean.ch2, bg.mean.ch3), list(Run), mean))
-bg.means <- data.frame(bg.means, row.names=1)
-bg.means
-bg.mean.lookup <- function(Run, channel) bg.means[Run, channel]
-
-resErr$r.mean.ch2 <- with(resErr, mean.ch2 - sapply(Run, bg.mean.lookup, 'bg.mean.ch2'))
-resErr$r.mean.ch3 <- with(resErr, mean.ch3 - sapply(Run, bg.mean.lookup, 'bg.mean.ch3'))
-
-fluo=resErr
-#Plot mean intensities for background, cells and reduced values.
-par(mfrow=c(1,3))
-
-bgBoxplot <- function (value, run, max, title)
-  boxplot( value ~ run
-         , col=c(1:5), las=2, cex=0.6
-         , ylim=c(0, max + 10)
-         , ylab=deparse(substitute(value))
-         , main=title)
-
-with(fluo, bgBoxplot(bg.mean.ch2, Run, max(mean.ch2), "Background ch2 by Run"))
-with(fluo, bgBoxplot(mean.ch2,    Run, max(mean.ch2), "Mean fluorescence ch2 by Run"))
-with(fluo, bgBoxplot(r.mean.ch2,  Run, max(mean.ch2), "Reduced ch2 by Run"))
-
-with(fluo, bgBoxplot(bg.mean.ch3, Run, max(mean.ch3), "Background ch3 by Run"))
-with(fluo, bgBoxplot(mean.ch3,    Run, max(mean.ch3), "Mean fluorescence ch3 by Run"))
-with(fluo, bgBoxplot(r.mean.ch3,  Run, max(mean.ch3), "Reduced ch3 by Run"))
-```
-    
-
-### <a name='overview'>Overview of the mean fluorescence values in ImageJ after background reduction</a>
-
-```{r}
-#Use the values according to discard column
-fluo=fluo[!fluo$discard,]
-
-attach(fluo)
-histogramPerRun <- function(X) {
-    qplot( data  = fluo
-           , x     = fluo[, X]
-           , geom  = "histogram"
-           , color = Run
-           , xlab  = X) + facet_wrap(~Run) +
-        theme(legend.position="none")
+flBoxplot <- function (DATA){
+  title.2=paste("Fluorescence by ",deparse(substitute(DATA)),", green",sep="")
+  title.3=paste("Fluorescence by ",deparse(substitute(DATA)),", red",sep="")
+  y=c(as.character(DATA[,"Error"]),rep("background",nrow(DATA)))
+  x.ch2=c(DATA[,"mean.ch2"],DATA[,"bg.mean.ch2"])
+  x.ch3=c(DATA[,"mean.ch3"],DATA[,"bg.mean.ch3"])
+  boxplot( x.ch2~y, main=title.2, las=1, horizontal=TRUE)
+  boxplot( x.ch3~y, main=title.3, las=1, horizontal=TRUE)
 }
 
-pairwiseFluoPlot <- function(AES) {
-    ggplot( data = fluo[sample(rownames(fluo)),]
-            , AES
-            , main = 'Channel 2 (green) vs. 3 (red), avg. intensity, color indicates run.'
-    ) + geom_point(size=3) +
-        theme(legend.position="none")
-}
+flBoxplot(em)
+flBoxplot(mb)
 
-g_legend<-function(a.gplot){ 
-    tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
-    legend <- tmp$grobs[[leg]] 
-    return(legend)
-} 
-
-panelLegend <- function(AES) {
-    g_legend(ggplot( data=fluo, AES) + geom_point(size=3))
-}
-
-
-
-AES <- aes( x=r.mean.ch2, y=r.mean.ch3, color=Run)
-
-grid.arrange( histogramPerRun("mean.ch2"), histogramPerRun("mean.ch3"), pairwiseFluoPlot(AES), panelLegend(AES), ncol =2)
 ```
-Fluorescence table was saved as *Results_fluorescence.txt*
+
+The low fluorescence value in wells with error *1-No cell* is expected and is similar to the background levels of fluorescence in both green and red channel. Cells classified as *2-Debris* could be defragmented cells, which have not lost their fluroescence, therefore the values are varying. The boxplots indicate that error report are different for *2-Debris* definition between two scorings. Compare the individual Error reports.
+
+
+###<a name='errorreport'>Error report</a>
+
+Observe the number of similar and different error scores between EM and MB. Observe the number of various classifications for both scorings.
 
 ```{r}
-summary(resErr)
-write.table(resErr, "Results_fluorescence.txt")
+summary(em$Error==mb$Error)
+cbind(em.error=summary(em$Error),mb.error=summary(mb$Error))
+```
+
+
+Error reporting differs between observers. Display the wells where reports differ, but at least one report has "0-No Error". Add "comment"column from MB, since there were no comments from EM for these cells.
+
+```{r}
+#Error report differs:
+diff=em$Error!=mb$Error
+differ=cbind(cell=as.character(em$Label),em.comment=as.character(em$Comment),em.error=as.character(em$Error),mb.error=as.character(mb$Error),mb.comment=as.character(substr(mb$Comment,1,45)))[diff,]
+difference=differ[(differ[,"em.error"]=="0-No Error")|(differ[,"mb.error"]=="0-No Error"),]
+levels(as.factor(difference[,"em.comment"]))
+length(levels(as.factor(difference[,"mb.comment"])))
+d=data.frame(difference[order(difference[,"em.error"]),-2])
+d
+```
+
+There is inconsistency with error reporting for `r ncol(d)` cells. Third opinion was asked from JS and TK and consensus was achieved for the cells with at least one *0-No Error* by EM or MB. All the cells with error *4-MultipleCells* by either EM or MB were decided to score as *0-No Error*. Six cells with *3-OutOfFocus* were decided to keep as *3-OutOfFocus* and five cells re-scored as *0-No Error*. 13 more cells with various errors were dicussed. The new scoring for cells with non-consensus was done as follows:
+
+```{r}
+d$error=d$mb.error
+d$error=as.matrix(d$error)
+d$error[d$mb.error=="4-MultipleCells",] <- "0-No Error"
+Consensus_OutOfFocus=c("1772-062-248_C03","1772-062-248_C04","1772-062-248_C05","1772-062-248_C10","1772-062-248_D06","1772-062-248_D08")
+d$error[match(Consensus_OutOfFocus,d$cell),] <- "3-OutOfFocus"
+Consensus_Discard=c("1772-062-248_B04","1772-062-249_C08","1772-062-038_G03","1772-062-249_E06","1772-062-103_C01","1772-062-038_D12")
+d$error[match(Consensus_Discard,d$cell),] <- "2-Debris"
+Consensus_Keep=c("1772-062-249_C11","1772-062-249_E08","1772-062-103_E03", "1772-062-039_H12","1772-062-038_F09","1772-067-038_H10","1772-062-248_D09")
+d$error[match(Consensus_Keep,d$cell),] <- "0-No Error"
+
+d[,c(-4)]
+```
+
+Use report by EM for final fluorescence values. Prepare additional columns for Run and Well. Rename errors in Error column to match the consensus error report. Add discard column for wells with consensus errors and outliers (fluorescence > 200). 
+
+
+```{r}
+em$Well <- substr(em$Label,14,16)
+em$Run <- as.factor(paste(substr(subb,1,4),substr(subb,6,8),substr(subb,10,13),sep="-"))
+em$Well <- as.factor(em$Well)
+em$Error[match(d$cell,em$Label)] <- d$error
+em$discard=FALSE
+em[em$Error!="0-No Error","discard"] <- TRUE  
+em[em$mean.ch3>200,"discard"] <- TRUE
+em[em$mean.ch2>200,"discard"] <- TRUE
+
+```
+
+###<a name='overview'>Overview and Conclusions</a>
+
+* The ImageJ macro produces reproducible results in the X and Y coordinates and in the mean values of fluorescence
+* The mean, standard deviation and maxium values correlate well with each other in both the green and the red channels* A consensus was achieved with respect to the error type
+* Fluorescence table was saved as *Results_fluorescence.txt*
+
+```{r}
+summary(em)
+write.table(em, "Results_fluorescence.csv", sep=",")
 sessionInfo()
 ```
