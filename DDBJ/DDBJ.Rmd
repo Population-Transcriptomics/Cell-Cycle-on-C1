@@ -53,23 +53,23 @@ link <- melt(Barcodes); names(link) <- c("DDBJIndex", "Library")
 WellID <- read.csv("WellToBarcodes.csv", header=T, stringsAsFactors=F)
 # separate DDBJ name and Index
 intermediate <- read.table(text=as.character(link$DDBJIndex), sep=':')
-final <- data.frame(link[,-1], intermediate); names(final) <- c("Library", "DDBJ", "Index")
+link <- data.frame(link[,-1], intermediate); names(link) <- c("Library", "DDBJ", "Index")
 # associate each Index from the DDBJ XML with the Well coordinates
-final$Well <- WellID$Well[match(as.character(final$Index), as.character(WellID$Index))]
+link$Well <- WellID$Well[match(as.character(link$Index), as.character(WellID$Index))]
 # split RunID and ExperimentAccession in column 1 of final
-intermediate <- read.table(text=as.character(final$Library), sep='_'); names(intermediate) <- c("Library", "ExperimentAccession")
-final <- cbind(final[,-1], intermediate)
+intermediate <- read.table(text=as.character(link$Library), sep='_'); names(intermediate) <- c("Library", "ExperimentAccession")
+link <- cbind(link[,-1], intermediate)
 # link Library with Run
 LibraryToC1ID <- c(RNhi10371="1772-062-248", RNhi10372="1772-062-249", RNhi10395="1772-064-103", RNhi10396="1772-067-038", RNhi10397="1772-067-039")
 # get cell IDs for DDBJ names
-final$Run <- as.character(sapply(final$Library, function(x) LibraryToC1ID[x]))
-final$cell_id <- paste(final$Run, final$Well, sep="_")
-head(final)
+link$Run <- as.character(sapply(link$Library, function(x) LibraryToC1ID[x]))
+link$cell_id <- paste(link$Run, link$Well, sep="_")
+head(link)
 ```
 
 ```{r, eval=T}
 # write final output table to current working directory
-write.csv(final, "DDBJLink.csv", row.names=F)
+write.csv(link, "DDBJLink.csv", row.names=F)
 ```
 
 The next part utilises the file "DDBJLink.csv" to rename downloaded fastq.bz2 files with the unique "cell_id".
