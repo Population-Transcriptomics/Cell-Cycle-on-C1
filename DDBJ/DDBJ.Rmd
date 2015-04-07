@@ -46,10 +46,8 @@ Barcodes <- xpathApply(top, "//LIBRARY_CONSTRUCTION_PROTOCOL", xmlValue)
 Barcodes <- gsub("\n", "", as.character(Barcodes))
 Barcodes <- strsplit(Barcodes, split=', ')
 names(Barcodes) <- paste(RunID, Accession, sep="_")
-# make list of string vectors
-Barcodes <- lapply(1:5, function(x) as.vector(Barcodes[x]))
 # create combined table in long format with run ID and DDBJ ID and barcode
-link <- melt(Barcodes)[,1:2]; names(link) <- c("DDBJIndex", "Library")
+link <- melt(Barcodes); names(link) <- c("DDBJIndex", "Library")
 # remove white spaces
 link <- as.data.frame(apply(link, 2, function(x) gsub('\\s+', '',x)))
 # load table that links well number with barcodes
