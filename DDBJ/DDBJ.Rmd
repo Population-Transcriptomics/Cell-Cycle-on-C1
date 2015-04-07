@@ -48,8 +48,6 @@ Barcodes <- strsplit(Barcodes, split=', ')
 names(Barcodes) <- paste(RunID, Accession, sep="_")
 # create combined table in long format with run ID and DDBJ ID and barcode
 link <- melt(Barcodes); names(link) <- c("DDBJIndex", "Library")
-# remove white spaces
-link <- as.data.frame(apply(link, 2, function(x) gsub('\\s+', '',x)))
 # load table that links well number with barcodes
 # the barcode sequences were taken from the Fluidigm protocol 'PN 100-5950 A1' 
 WellID <- read.csv("WellToBarcodes.csv", header=T, stringsAsFactors=F)
