@@ -44,7 +44,7 @@ Accession <- lapply(Experiment, function(x) x[1])
 Barcodes <- xpathApply(top, "//LIBRARY_CONSTRUCTION_PROTOCOL", xmlValue)
 # 
 filter <- gsub("\n", "", as.character(Barcodes))
-filter <- strsplit(filter, split=',')
+filter <- strsplit(filter, split=', ')
 names(filter) <- paste(RunID, Accession, sep="_")
 # load table that links well number with barcodes
 # the barcode sequences were taken from the Fluidigm protocol 'PN 100-5950 A1' 
