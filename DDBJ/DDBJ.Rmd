@@ -78,16 +78,16 @@ names(link) <- c("DDBJIndex", "Library")
 
 # separate DDBJ name and Index
 intermediate <- read.table(text=as.character(link$DDBJIndex), sep=':')
-link <- data.frame(link[,-1], intermediate)
-names(link) <- c("Library", "DDBJ", "Index")
+
+# split RunID and ExperimentAccession in column 1 of final
+intermediate2 <- read.table(text=as.character(link$Library), sep='_')
+
+# Paste the intermediate tables as a new 'link' table.
+link <- cbind(intermediate, intermediate2)
+names(link) <- c("DDBJ", "Index", "Library", "ExperimentAccession")
 
 # associate each Index from the DDBJ XML with the Well coordinates
 link$Well <- WellID$Well[match(as.character(link$Index), as.character(WellID$Index))]
-
-# split RunID and ExperimentAccession in column 1 of final
-intermediate <- read.table(text=as.character(link$Library), sep='_')
-names(intermediate) <- c("Library", "ExperimentAccession")
-link <- cbind(link[,-1], intermediate)
 
 # get cell IDs for DDBJ names
 link$Run <- as.character(sapply(link$Library, function(x) LibraryToC1ID[x]))
