@@ -39,7 +39,7 @@ top <- xmlRoot(DDBJ)
 RunID <- xpathApply(top, "//LIBRARY_NAME", xmlValue)
 # get DDBJ Run accession number
 Experiment  <- xpathApply(top, "//EXPERIMENT", xmlAttrs)
-Accession <- lapply(1:5, function(x) Experiment[[x]][1])
+Accession <- lapply(Experiment, function(x) x[1])
 # get the cell barcodes
 Barcodes <- xpathApply(top, "//LIBRARY_CONSTRUCTION_PROTOCOL", xmlValue)
 # 
