@@ -90,7 +90,7 @@ names(link) <- c("DDBJ", "Index", "Library", "ExperimentAccession")
 link$Well <- WellID$Well[match(as.character(link$Index), as.character(WellID$Index))]
 
 # get cell IDs for DDBJ names
-link$Run <- as.character(sapply(link$Library, function(x) LibraryToC1ID[x]))
+link$Run <- LibraryToC1ID[link$Library]
 link$cell_id <- paste(link$Run, link$Well, sep="_")
 head(link)
 ```
