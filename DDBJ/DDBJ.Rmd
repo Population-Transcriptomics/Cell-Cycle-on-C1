@@ -6,18 +6,20 @@ knitr::opts_knit$set(verbose = TRUE)
 DDBJ data management
 ====================
 
-The following description is only suitable for the download and renaming of fastq file stored at [DDBJ](http://trace.ddbj.nig.ac.jp/DRASearch/submission?acc=DRA002399). However, the same data can be obtained from [NCBI](http://www.ncbi.nlm.nih.gov/Traces/sra/?study=DRP002435) and [EBI](https://www.ebi.ac.uk/ena/data/view/DRP002435) 
+Raw sequences in FASTQ format were deposited in the DNA DataBank of Japan
+(DDBJ), with metadata relating each file to one multiplexed sample from one
+HiSeq library.  This page explains how to associate sequencing data to a given
+well from a given C1 run, and provides scripts to download the data and rename
+the files according to cell identifiers instead of DDBJ accession numbers.  The
+first part, on metadata handling is done in R and is rebuildable.  The second
+part, which involves a long download, has been tested but is not automatically
+re-executed when runnign knitr.
 
-First create a directory in which to download all the 945 compressed fastq files.
 
-```{r download, engine='sh', eval=FALSE}
-# create a directory for data download, go to that directory and start the download of all fastq files from the 
-mkdir 'yourdirectoryname'; cd 'yourdirectoryname'
-lftp ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399
-mget -c */*.bz2
-```
+Accession numbers and metadata
+------------------------------
 
-The following script creates a table that has 6 columns: "Library",  "Well", "DDBJ", "Index", "ExperimentAccession", "cell_id", and 472 rows. Each row represents a single cell. 
+The following script downloads metadata from DDBJ and creates a table that has 6 columns: "Library",  "Well", "DDBJ", "Index", "ExperimentAccession", "cell_id", and 472 rows. Each row represents a single cell. 
 
 - **"Library"**: the sequencing flowcell run ID (e.g. "RNhi10371")
 - **"Well"**: the coordinate of a cell on the 96-well plate after transfer of cDNA from the C1 capture array 
@@ -100,6 +102,21 @@ head(link)
 write.csv(link, "DDBJLink.csv", row.names=F)
 ```
 
+Data download and file renaming
+-------------------------------
+
+The following description is only suitable for the download and renaming of fastq file stored at [DDBJ](http://trace.ddbj.nig.ac.jp/DRASearch/submission?acc=DRA002399). However, the same data can be obtained from [NCBI](http://www.ncbi.nlm.nih.gov/Traces/sra/?study=DRP002435) and [EBI](https://www.ebi.ac.uk/ena/data/view/DRP002435) 
+
+This script, and the page on [spike detection](../spikes/spikes.Rmd) assume
+that the 945 compressed fastq files are downloaded in this directory.  If you
+downoload them somewhere else, you need to provide symbolic links, like with
+`for FILE in /somewhere/else/*.fastq.bz2 ; do ln -s $FILE ; done`.
+
+```{r download, engine='sh', eval=FALSE}
+lftp ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/DRA002/DRA002399
+mget -c */*.bz2
+```
+
 The next part utilises the file "DDBJLink.csv" to rename downloaded fastq.bz2 files with the unique "cell_id".
 Adjust the below script to the directory in which the "DDBJLink.csv" is located. Furthermore, your working directory should be 'yourdirectoryname' where all the dowloaded fastq.bz2 files are saved. 
 
@@ -111,6 +128,5 @@ cut -f4,8 DDBJLink.csv | sed 1d | while read from to ; do mv ${from}_1.fastq.bz2
 The file fastq_md5sum.csv contains the md5 checksums for all fastq.bz2 files after renaming and can be used for validity checks by comparing the md5sums of your local renamed files.
 
 ```{r md5sum check, engine='sh', eval=F}
-# execute in the directory with the renamed files
-ls -lh | awk '{print $9}' | xargs md5sum >> ../fastq_md5sums.txt
+md5sum -c fastq_md5sums.txt
 ```
