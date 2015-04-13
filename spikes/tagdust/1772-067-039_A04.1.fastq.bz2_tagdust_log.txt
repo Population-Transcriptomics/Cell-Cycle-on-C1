@@ -1,0 +1,37 @@
+../DDBJ/1772-067-039_A04.1.fastq.bz2	Input file name.
+04-11-2015;10:19am	Date and Time
+20.000000	selected threshold
+999994	total input reads
+898028	successfully extracted
+89.8%	extracted
+0	barcode / UMI not found
+0	too short
+0	ambiguous barcode
+0	problems with architecture
+8240	low complexity
+93726	match artifacts:
+23619	Nextera_701
+57	Nextera_702
+9	Nextera_703
+68011	Nextera_704
+22	Nextera_705
+1	Nextera_706
+7	Nextera_707
+26	Nextera_709
+4	Nextera_710
+12	Nextera_711
+2	Nextera_712
+2	Nextera_701_Reversed:
+1	Nextera_703_Reversed:
+145	Nextera_704_Reversed:
+1	Nextera_706_Reversed:
+1	Nextera_708_Reversed:
+3	Nextera_709_Reversed:
+1	Nextera_712_Reversed:
+1	rRNA_5.8S
+508	rRNA_18S
+42	rRNA_28S
+137	EC2_RNA_SPIKE_1_(750_bp)
+5	EC15_RNA_SPIKE_4_(1000_bp)
+865	HPV18
+244	HPV18_as

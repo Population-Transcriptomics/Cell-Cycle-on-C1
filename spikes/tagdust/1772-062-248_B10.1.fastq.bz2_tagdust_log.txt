@@ -1,0 +1,44 @@
+../DDBJ/1772-062-248_B10.1.fastq.bz2	Input file name.
+04-10-2015; 4:19pm	Date and Time
+20.000000	selected threshold
+1216124	total input reads
+1059515	successfully extracted
+87.1%	extracted
+0	barcode / UMI not found
+0	too short
+0	ambiguous barcode
+0	problems with architecture
+9100	low complexity
+147509	match artifacts:
+1	Nextera_501
+26635	Nextera_701
+8648	Nextera_702
+21	Nextera_703
+30	Nextera_704
+39	Nextera_705
+20	Nextera_706
+9	Nextera_707
+67	Nextera_708
+6	Nextera_709
+102396	Nextera_710
+24	Nextera_711
+28	Nextera_712
+6	Nextera_701_Reversed:
+4	Nextera_702_Reversed:
+2	Nextera_703_Reversed:
+9	Nextera_704_Reversed:
+3	Nextera_705_Reversed:
+36	Nextera_706_Reversed:
+21	Nextera_707_Reversed:
+2	Nextera_708_Reversed:
+50	Nextera_709_Reversed:
+253	Nextera_710_Reversed:
+3	Nextera_711_Reversed:
+4	Nextera_712_Reversed:
+1191	rRNA_18S
+94	rRNA_28S
+4582	EC2_RNA_SPIKE_1_(750_bp)
+376	EC15_RNA_SPIKE_4_(1000_bp)
+22	EC18_RNA_SPIKE_7_(1474bp)
+2203	HPV18
+724	HPV18_as
