@@ -1,0 +1,399 @@
+```{r echo=FALSE}
+knitr::opts_knit$set(verbose = TRUE)
+options(width=100)
+```
+
+Fluorescence data correction
+=============================
+
+The input is a data frame with 6 columns: "cell_id", "mean_ch2", "bg_mean_ch2", "mean_ch3", "bg_mean_ch3", "Run". The data file is Results_fluorescence.csv.
+
+Install all the packages listed below with ```install.packages()```, in case they are not already installed. Then load the packages.
+
+```{r load required libraries}
+library(moments)
+library(lattice)
+library(flexmix)
+library(limma)
+library(MASS)
+library(rms)
+library(contrast)
+```
+
+```{r function collection}
+# function for creating a list of input data objects
+createData <- function(data) {
+  dd <- matrix(as.numeric(data[, 2:(ncol(data)-1)]), nrow=nrow(data))
+  samples <- data[,1]
+  # assigns a number to all 5 runs
+  batches <- as.numeric(data[,ncol(data)])
+  # creates a list of 4 elements (row index for each cell, matrix of fluorescence values, sample name factor, batch number)
+  return(list(index=1:length(samples), RGexprs=dd, samples=samples, batch=batches))
+}
+
+BGcorrectFucci <- function(data, method, old.offset, bg) {
+  if(bg == TRUE) {
+    RG <- new("RGList", list(R=data[,1], G=data[,3], Rb=data[,2], Gb=data[,4]))
+    offset <- min(apply(data[, c(2,4)], 2, min))+1
+  if(method == "subtract") {
+    core<-backgroundCorrect(RG, method=method, offset=offset)
+  } 
+  else {
+    core <- backgroundCorrect(RG, method=method)
+  }}
+  if(bg == FALSE) {
+    RG <- new("RGList", list(R=data[,1], G=data[,2]))
+    core <- backgroundCorrect(RG, method=method, offset=old.offset)
+  }
+  core<-matrix(cbind(core$R, core$G), ncol=2)
+  return(list(core, offset))
+}
+
+boxcoxMatrix <- function(data) {
+  est <- boxcox(data~1, lambda=seq(-4, 4, 0.01), plotit=FALSE)
+  lmb <- est$x[which(est$y == max(est$y))]
+  rang <- range(est$x[est$y > max(est$y)-qchisq(0.95, 1)/2])
+  if(rang[1]*rang[2]>=0) {
+  data <- log(data)
+  lmb <- 0
+  } else {
+  data <- ((data^lmb)-1)/lmb
+  }
+  return(list(data, lmb))
+}
+
+
+doTransform <- function(data, transform) {
+  dat <- c()
+  if(transform == "bc") {
+  est <- apply(data, 2, boxcoxMatrix)
+  dat <- matrix(cbind(matrix(est[[1]][[1]], ncol=1), matrix(est[[2]][[1]], ncol=1)), ncol=2)
+  lpar <- c(est[[1]][[2]], est[[2]][[2]])
+  }
+  if(transform == "log") {
+  dat <- matrix(log(data), ncol=2)
+  lpar <- c()
+  }
+  if(transform == "log10") {
+  dat <- matrix(log(data, 10), ncol=2)
+  lpar <- c()
+  }
+  if(transform == "asinh") {
+  dat <- matrix(asinh(data), ncol=2)
+  lpar <- c()
+  }
+  if(transform == "none") {
+  dat <- data
+  lpar <- c()
+  }
+  return(list(dat, lpar))
+}
+
+
+invTransform <- function(data, lambda, transform) {
+  res <- c()
+  if(transform == "bc") {
+  if(lambda == 0) { 
+  res <- exp(data) 
+  } else {
+  res <- (lambda*data + 1)^(1/lambda)
+  }}
+  if(transform == "log10") {
+  res <- 10^data
+  }
+  if(transform == "log") {
+  res <- exp(data)
+  }
+  if(transform == "asinh") {
+  res <- sinh(data)
+  }
+  return(res)
+} 
+
+
+boxFucci <- function(data, transform, reference, legends) {
+  edata <- data$exprs
+  f <- factor(data$batch)
+  f <- as.numeric(levels(relevel(f, ref=reference)))
+  d <- as.list(rep(0, (2*max(f))))
+  est <- doTransform(data=edata, transform=transform)
+  dat <- est[[1]]
+  lpar <- est[[2]]
+  d[[f[1]]] <- dat[which(data$batch == f[1]), 1]
+  for(i in 2:(2*max(f))) {
+  if(i<=max(f)) {
+  d[[f[i]]] <- dat[which(data$batch == f[i]), 1]
+  } else {
+  d[[(f[(i-max(f))]+max(f))]] <- dat[which(data$batch == f[(i-max(f))]), 2]
+  }}
+  
+  legs <- c(paste("Ch2: ", max(f), " Runs", sep=""), paste("Ch3: ", max(f), " Runs", sep=""))
+  densX <- as.list(rep(0, length(d)))
+  densY <- as.list(rep(0, length(d)))
+  for(i in 1:length(d)) {
+  densX[[i]] <- density(d[[i]])$x
+  densY[[i]] <- density(d[[i]])$y
+  }
+  adX <- unlist(densX)
+  adY <- unlist(densY)
+  
+  plot(densX[[1]], densY[[1]], main=legs[1], col=1, type="l", sub="", xlab="transformed intensities", ylab="Density", xlim=c(min(adX), max(adX)), ylim=c(min(adY), max(adY)))
+  if(max(f)>1) {
+  for(i in 2:max(f)) {
+  lines(densX[[i]], densY[[i]], col=i)
+  }}
+  
+  plot(densX[[(1+max(f))]], densY[[(1+max(f))]], main=legs[2], col=1, type="l", sub="", xlab="transformed intensities", ylab="Density", xlim=c(min(adX), max(adX)), ylim=c(min(adY), max(adY)))
+  if(max(f)>1) {
+  for(i in 2:max(f)) {
+  lines(densX[[(i+max(f))]], densY[[(i+max(f))]], col=i)
+  }}
+  
+  return(list(dat, data$batch, lpar))
+}
+
+
+refineMixes <- function(data, batch, model) {
+  cc1 <- clusters(model)
+  cc <- rep(0, length(cc1))
+  for(i in 1:max(batch)) {
+  w <- which(batch == i)
+  cl <- cc1[w]
+  d <- data[w]
+  sl <- sort.list(aggregate(d, list(cl), mean)[,2])
+  cl1 <- rep(0, length(cl))
+  for(j in 1:length(sl)) {
+  cl1[which(cl == sl[j])] <- j
+  }
+  cc[w] <- cl1
+  }
+  return(cc)
+}
+
+
+lmFucci <- function(data, batch, maxMix, reference, prior.pi) {
+  if(length(unique(batch)) == 1) {
+  Batch <- factor(batch)
+  mod <- stepFlexmix(data ~ 1, k = 1:maxMix, nrep=20, control = list(minprior = prior.pi))
+  }
+  if(length(unique(batch))>1) {
+  Batch <- factor(batch)
+  Batch <- relevel(Batch, ref=reference)
+  mod <- stepFlexmix(data ~ Batch, k = 1:maxMix, nrep=20, control = list(minprior = prior.pi))
+  }
+  gg <- getModel(mod)
+  Comp <- refineMixes(data, batch, gg)
+  w1 <- c()
+  
+  if(length(unique(batch))>1 & length(unique(Comp))>1) {
+  mod <- lm(data~factor(Comp)*factor(Batch))
+  desMat <- model.matrix(~factor(Comp)*factor(Batch))
+  rr <- rownames(summary(mod)[[4]])
+  w1 <- which(rr == paste("factor(Comp)", max(Comp), sep=""))
+  }
+  if(length(unique(batch))>1 & length(unique(Comp)) == 1) {
+  mod <- lm(data~factor(Batch))
+  desMat <- model.matrix(~factor(Batch))
+  rr <- rownames(summary(mod)[[4]])
+  w1 <- which(rr == "(Intercept)")
+  }
+  if(length(unique(batch)) == 1 & length(unique(Comp))>1) {
+  mod <- lm(data~factor(Comp))
+  desMat <- model.matrix(~factor(Comp))
+  }
+  if(length(unique(batch)) == 1 & length(unique(Comp)) == 1) {
+  mod <- lm(data~1)
+  desMat <- c()
+  }
+  rr <- rownames(summary(mod)[[4]])
+  cc <- c(colnames(summary(mod)[[4]]), "FDR")
+  compEsts <- matrix(as.numeric(summary(mod)[[4]][,c(1,4)]), ncol=2)
+  compEsts <- matrix(cbind(compEsts, matrix(p.adjust(compEsts[, ncol(compEsts)], "BH"), ncol=1)), nrow=nrow(compEsts))
+  resids <- mod$residuals
+  stdresids <- rstandard(mod)
+  fitted <- mod$fitted.values
+  compEsts <- matrix(cbind(rr, compEsts), ncol=(ncol(compEsts)+1))
+  compEsts <- matrix(rbind(c("", cc[c(1, 4, 5)]), compEsts), ncol=ncol(compEsts))
+  ww <- as.list(rep(0, max(Comp)))
+  for(i in 1:max(Comp)) {
+  ww[[i]] <- which(Comp == i)
+  }
+  wall <- length(rr)
+  subtInd <- c()
+  if(length(w1)>0) {
+  subtInd <- (w1+2):(wall+1)
+  }
+  return(list(compEsts, Comp, ww, resids, stdresids, fitted, subtInd, desMat))
+}
+
+
+batchFucci  <-  function(data, maxMix, reference, prior.pi) {
+  edata <- data[[1]]
+  om <- apply(edata, 2, mean)
+  ests <- apply(edata, 2, lmFucci, batch=data[[2]], maxMix=maxMix, reference=reference, prior.pi=prior.pi)
+  coefs <- list(as.numeric(ests[[1]][[1]][ests[[1]][[7]], 2]), as.numeric(ests[[2]][[1]][ests[[2]][[7]], 2]))
+  new <- resids <- stdresids <- fitted <- edata
+  for(i in 1:2) {
+  resids[, i] <- as.numeric(ests[[i]][[4]])
+  stdresids[, i] <- as.numeric(ests[[i]][[5]])
+  fitted[, i] <- as.numeric(ests[[i]][[6]])
+  if(length(ests[[i]][[7]])>0) {
+  for(b in 1:length(ests[[i]][[7]])) {
+  new[, i] <- new[, i]-coefs[[i]][b]*ests[[i]][[8]][, (ests[[i]][[7]][b]-1)]
+  }
+  }
+  new[, i] <- new[, i]-mean(new[, i])+om[i]
+  }
+  return(list(exprs=new, batch=data[[2]], mixesCh2=ests[[1]][[2]], mixesCh3=ests[[2]][[2]], residuals=resids, standardized.residuals=stdresids, fitted.values=fitted, estCh2=ests[[1]][[1]], estCh3=ests[[2]][[1]], designCh2=ests[[1]][[8]], designCh3=ests[[2]][[8]]))
+}
+
+
+# the main fuction to create necessary parameters for normaization
+# corresponds to step 2
+adjustFucci <- function(data, transform, qnormalize=FALSE, maxMix, reference, by.batch=FALSE, prior.pi, savePlot) {
+  if(length(savePlot)>0) {
+  postscript(paste(savePlot, "/densities.ps", sep=""))
+  }
+  par(mfrow=c(2, 2))
+  if(by.batch == FALSE) {
+  dd <- BGcorrectFucci(data$RGexprs, method="subtract", old.offset=c(), bg=TRUE)
+  dd <- list(exprs=dd[[1]], batch=data$batch, offset=dd[[2]])
+  if(reference>max(data$batch)) {
+  reference <- max(data$batch)
+  print(paste("the baseline dataset for batch effect correction has changed to ", reference, sep=""))
+  }
+  res1 <- boxFucci(dd, transform=transform, reference=reference, legends="uncorrected/unadjusted")
+  res2 <- batchFucci(res1, maxMix=maxMix, reference=reference, prior.pi=prior.pi)
+  res2$exprs <- BGcorrectFucci(matrix(cbind(invTransform(res2$exprs[, 1], lambda=res1[[3]][1], transform=transform), invTransform(res2$exprs[, 2], lambda=res1[[3]][2], transform=transform)), ncol=2), method="normexp", old.offset=dd$offset, bg=FALSE)[[1]]
+  res3 <- boxFucci(res2, transform=transform, reference=reference, legends="corrected/unadjusted")
+  } else {
+  d1 <- matrix(0, 1, 2)
+  for(b in 1:max(data$batch)) {
+  d1 <- matrix(rbind(d1, BGcorrectFucci(data$RGexprs[which(data$batch == b), ], method="normexp", old.offset=c(), bg=TRUE)[[1]]), ncol=2)
+  }
+  dd <- d1[-1, ]
+  dd <- list(exprs=dd, batch=data$batch)
+  if(reference>max(data$batch)) {
+  reference <- max(data$batch)
+  print(paste("the baseline dataset for batch effect correction has changed to ", reference, sep=""))
+  }
+  res1 <- boxFucci(dd, transform=transform, reference=reference, legends="uncorrected/unadjusted")
+  res2 <- batchFuccii(res1, maxMix=maxMix, reference=reference, prior.pi=prior.pi)
+  res2$exprs <- matrix(cbind(invTransform(res2$exprs[, 1], lambda=res1[[3]][1], transform=transform), invTransform(res2$exprs[, 2], lambda=res1[[3]][2], transform=transform)), ncol=2)
+  res3 <- boxFucci(res2, transform=transform, reference=reference, legends="corrected/unadjusted")
+  }
+  if(qnormalize == TRUE) {
+  res3[[1]] <- normalize.quantiles(res3[[1]])
+  res3 <- boxFucci(res3[[1]], transform="none", reference=reference, legends="corrected/adjusted")
+  }
+  
+  if(length(savePlot)>0) {
+  dev.off()
+  }
+  
+  if(length(savePlot) == 0) {
+  x11()
+  }
+  r <- res2$residuals
+  sr <- res2$standardized.residuals
+  f <- res2$fitted.values
+  
+  if(length(savePlot)>0) {
+  postscript(paste(savePlot, "/diagnostics.ps", sep=""))
+  }
+  par(mfrow=c(3, 3))
+  options(warn=-1)
+  hist(c(r), breaks=50, xlab="Residuals", main="Model Residuals", sub=paste("KS-test for normality: ", round(ks.test(c(r), "pnorm", 0, sqrt(var(c(r))))$p.value, 3), sep=""))
+  hist(r[, 1], breaks=50, xlab="Residuals", main="Residuals of Ch2 Fucci", sub=paste("KS-test for normality: ", round(ks.test(r[, 1], "pnorm", 0, sqrt(var(r[, 1])))$p.value, 3), sep=""))
+  hist(r[, 2], breaks=50, xlab="Residuals", main="Residuals of Ch3 Fucci", sub=paste("KS-test for normality: ", round(ks.test(r[, 2], "pnorm", 0, sqrt(var(r[, 2])))$p.value, 3), sep=""))
+  plot(c(f), c(sr), xlab="Model fitted values", ylab="Model Standardized Residuals", main="Fitted vs standardized residuals (Model)")
+  plot(f[, 1], sr[, 1], xlab="Ch2 fitted values", ylab="Ch2 Standardized Residuals", main="Fitted vs standardized residuals (Ch2)")
+  plot(f[, 2], sr[, 2], xlab="Ch3 fitted values", ylab="Ch3 Standardized Residuals", main="Fitted vs standardized residuals (Ch3)")
+  cr <- c(r)
+  cf <- c(f)
+  acf(cr[sort.list(cf)], main="Autocorrelation of Model residuals")
+  acf(r[sort.list(f[, 1]), 1], main="Autocorrelation of Ch2 residuals")
+  acf(r[sort.list(f[, 2]), 2], main="Autocorrelation of Ch3 residuals")
+  
+  if(length(savePlot)>0) {
+  dev.off()
+  }
+  if(length(savePlot) == 0) {
+  x11()
+  }
+  if(length(savePlot)>0) {
+  postscript(paste(savePlot, "/corrected2D.ps", sep=""))
+  }
+  plot(res3[[1]], cex=0.7, xlab="Ch2 intensity", ylab="Ch3 intensity", main="")
+  if(length(savePlot)>0) {
+  dev.off()
+  }
+  
+  ago <- c(round(agostino.test(r[, 1])$p.value, 3), round(agostino.test(r[, 2])$p.value, 3), round(agostino.test(c(r))$p.value, 3))
+  bon <- c(round(bonett.test(r[, 1])$p.value, 3), round(bonett.test(r[, 2])$p.value, 3), round(bonett.test(c(r))$p.value, 3))
+  jar <- c(round(jarque.test(r[, 1])$p.value, 3), round(jarque.test(r[, 2])$p.value, 3), round(jarque.test(c(r))$p.value, 3))
+  ks <- c(round(ks.test(r[, 1], "pnorm", 0, sqrt(var(r[, 1])))$p.value, 3), round(ks.test(r[, 2], "pnorm", 0, sqrt(var(r[, 2])))$p.value, 3), round(ks.test(c(r), "pnorm", 0, sqrt(var(c(r))))$p.value, 3))
+  sk <- c(round(skewness(r[, 1]), 3), round(skewness(r[, 2]), 3), round(skewness(c(r)), 3))
+  ku <- c(round(kurtosis(r[, 1]), 3), round(kurtosis(r[, 2]), 3), round(kurtosis(c(r)), 3))
+  legR <- c("", "Skewness (ideal=0)", "Kurtosis (ideal=3)", "Agostino test for Skewness", "Bonett test for Kurtosis", "Jarque test for Normality", "KS-test for Normality")
+  legC <- c("Ch2", "Ch3", "Ch2 & Ch3") 
+  report <- matrix(cbind(legC, sk, ku, ago, bon, jar, ks), nrow=3)
+  report <- matrix(rbind(legR, report), ncol=ncol(report))
+  resALL <- c(data, list(exprs=dd$exprs, corrected.exprs=res2$exprs, corrected.transformed.exprs=res3[[1]], mixesCh2=res2$mixesCh2, mixesCh3=res2$mixesCh3, BatchCh2.est=res2$estCh2, BatchCh3.est=res2$estCh3, fitted.values=f, transform=transform, model.residuals=r, model.standardized.residuals=sr, residual.statistics=report, lpar=res1[[3]], designCh2=res2$designCh2, designCh3=res2$designCh3, reference=reference))
+  return(resALL)
+}
+
+
+# calculates contrast estimates (differences and P-values) among the runs
+# corresponds to step 3
+contrastFucci <- function(data, channel) {
+  data$exprs <- doTransform(data$exprs, data$transform)[[1]]
+  if(channel == "Ch2") {
+  d1 <- data.frame(Int=data$exprs[, 1], mixes=factor(data$mixesCh2), batch=relevel(factor(data$batch), ref=data$reference))
+  a <- as.character(sort(unique(data$mixesCh2)))
+  }
+  if(channel == "Ch3") {
+  d1 <- data.frame(Int=data$exprs[, 2], mixes=factor(data$mixesCh3), batch=relevel(factor(data$batch), ref=data$reference))
+  a <- as.character(sort(unique(data$mixesCh3)))
+  }
+  mod <- lm(Int~mixes*batch, data=d1)
+  b <- c()
+  for(i in 1:max(data$batch)) {
+  b <- c(b, as.character(i))
+  }
+  b <- t(combn(b, 2))
+  res <- matrix(c("Channel", "Component", "Run1", "Run2", "Contrast", "Pvalue"), 1, 6)
+  for(i in 1:length(a)) {
+  for(j in 1:nrow(b)) {
+  rr <- contrast(mod,  a=list(mixes=a[i], batch=b[j, 1]),  b=list(mixes=a[i], batch=b[j, 2]),  type = "average")
+  res <- matrix(rbind(res, c(channel, a[i], b[j, ], as.numeric(unlist(rr)[c(1, 7)]))), ncol=ncol(res))
+  }}
+  
+  p <- p.adjust(as.numeric(res[2:nrow(res), ncol(res)]), "BH")
+  res <- matrix(cbind(res, c("FDR", p)), nrow=nrow(res))
+  ll <- list(res)
+  names(ll) <- paste(channel, ".contrasts", sep="")
+  return(c(data, ll))
+}
+
+```
+
+The following part uses the Results_fluorescence.csv file generated by the Fluorescence-measured-in-ImageJ.Rmd script.
+Step 1 brings the data to a required input format for the background and run effects correction, which is done in step 2.
+
+```{r final intensities}
+# subsets and transforms the input data
+data <- read.csv("../fluorescence/Results_fluorescence.csv", header=T)
+data <- data[!data$discard, c("cell_id", "mean_ch2", "bg_mean_ch2", "mean_ch3", "bg_mean_ch3", "Run")]
+data$Run <- as.numeric(data$Run)
+data <- as.matrix(data)
+
+step1 <- createData(data)
+step2 <- adjustFucci(data=step1, transform="bc", maxMix=3, reference=5, prior.pi=0.2, savePlot=c())
+step3 <- contrastFucci(data=step2, channel="Ch2")
+final <- contrastFucci(data=step3, channel="Ch3")
+# create table with corrected fluorescence values
+correctedFluo <- data.frame(final$samples, final$corrected.exprs, final$corrected.transformed.exprs)
+names(correctedFluo) <- c("cell_id", "Ch2_corrected", "Ch3_corrected", "Ch2_corrected_transformed", "Ch3_corrected_transformed")
+write.csv(correctedFluo, "../Intensity_correction/correctedIntensities.csv", row.names=F)
+```
