@@ -59,7 +59,7 @@ Datasets
 
  - `Nextera.fa`: sequence of the Nextera primers according to <http://support.illumina.com/downloads/illumina-customer-sequence-letter.html>.
 
- - `hpv18.fa` and hpv18-as.fa`, sense and antisense HPV18 sequence from GenBank
+ - `hpv18.fa` and `hpv18-as.fa`, sense and antisense HPV18 sequence from GenBank
     record AY262282.  HeLa cells have a fragment of HPV inserted in their genome.
 
 
@@ -75,9 +75,9 @@ Detection of the spikes using TagDust.
 To run this section, [install
 TagDust](http://sourceforge.net/projects/tagdust/files/) version 2.06 in the
 current directory, unpack and compile it.  (This script can not use higher
-version of TagDust because the do not allow for the redirection of the output
+version of TagDust because they do not allow for the redirection of the output
 sequences to `/dev/null/`.), then, edit the RMarkdown code and remove the
-`eval=FALSE` statement.
+`eval=FALSE` statement. The TagDust counting with 8 CPU cores takes approximately 1 day.
 
 
 ```sh
@@ -90,7 +90,7 @@ do
 done
 ```
 
-Loops to create of a file called `spikes.txt`, where each line gives the number of
+Loops to create a file called `spikes.txt`, where each line gives the number of
 reads matching one given spike in one given file.
 
 
@@ -104,7 +104,7 @@ do
       for READ in 1 2
       do
         grep -e rRNA -e SPIKE -e input -e complex -e Nextera -e HPV tagdust/${LIBRARY}_${ROW}${COLUMN}.${READ}* |
-          sed "s/^/$LIBRARY\tR$READ\t$ROW$COLUMN\t/"
+          perl -pe "s/^/$LIBRARY\tR$READ\t$ROW$COLUMN\t/"
       done
     done
   done
@@ -114,6 +114,22 @@ head spikes.txt
 ```
 
 ```
+## grep: tagdust/1772-064-103_A09.1*: No such file or directory
+## grep: tagdust/1772-064-103_A09.2*: No such file or directory
+## grep: tagdust/1772-064-103_B09.1*: No such file or directory
+## grep: tagdust/1772-064-103_B09.2*: No such file or directory
+## grep: tagdust/1772-064-103_C09.1*: No such file or directory
+## grep: tagdust/1772-064-103_C09.2*: No such file or directory
+## grep: tagdust/1772-064-103_D09.1*: No such file or directory
+## grep: tagdust/1772-064-103_D09.2*: No such file or directory
+## grep: tagdust/1772-064-103_E09.1*: No such file or directory
+## grep: tagdust/1772-064-103_E09.2*: No such file or directory
+## grep: tagdust/1772-064-103_F09.1*: No such file or directory
+## grep: tagdust/1772-064-103_F09.2*: No such file or directory
+## grep: tagdust/1772-064-103_G09.1*: No such file or directory
+## grep: tagdust/1772-064-103_G09.2*: No such file or directory
+## grep: tagdust/1772-064-103_H09.1*: No such file or directory
+## grep: tagdust/1772-064-103_H09.2*: No such file or directory
 ## 1772-062-248	R1	A01	1964004	total input reads
 ## 1772-062-248	R1	A01	9130	low complexity
 ## 1772-062-248	R1	A01	1	Nextera_501
@@ -133,20 +149,14 @@ Construction of a table in R
 ```r
 library(reshape)
 library(ggplot2)
-```
 
-```
-## Loading required package: methods
-```
-
-```r
 spikes <- read.delim('spikes.txt', sep="\t", col.names=c('Run', 'read', 'cell', 'value', 'count'), head=FALSE)
 ggplot(
   data=spikes,
   aes(x=count, y=value, colour=read)) + geom_boxplot() + coord_flip() + scale_y_log10('Raw count')
 ```
 
-![plot of chunk control-sequences_load_data](figure/control-sequences_load_data.png) 
+![plot of chunk control-sequences_load_data](figure/control-sequences_load_data-1.png) 
 
 ```r
 summary(spikes)
@@ -170,8 +180,8 @@ lower (see below).  There is not much difference between the counts from Reads
 1 and 2, except for the Nextera primers where reverse primers are found in Read
 1 and forward primers in Read 2
 
-In the next steps, the data is transformed in a matrix of counts, which are
-then normalised as a percentage of the total number of reads.  Counts from Read
+In the next steps, the data is transformed to a matrix of counts, which are
+then converted as a percentage of the total number of reads.  Counts from Read
 1 and Read 2 are averaged, and counts for the Nextera primers are summed.
 
 
@@ -235,29 +245,29 @@ summary(spikes.norm)
 ```
 
 ```
-##            Run          Well       cell_id          low.complexity      SPIKE_1      
-##  1772-062-248:96   A01    :  5   Length:472         Min.   :   515   Min.   :    29  
-##  1772-062-249:96   A02    :  5   Class :character   1st Qu.:  2372   1st Qu.:   229  
-##  1772-064-103:88   A03    :  5   Mode  :character   Median :  3579   Median :  6109  
-##  1772-067-038:96   A04    :  5                      Mean   :  7829   Mean   : 41353  
-##  1772-067-039:96   A05    :  5                      3rd Qu.:  5842   3rd Qu.: 10085  
-##                    A06    :  5                      Max.   :253686   Max.   :652582  
-##                    (Other):442                                                       
-##     SPIKE_4         SPIKE_7        SPIKE_3         SPIKE_6          rRNA_18S       rRNA_28S     
-##  Min.   :    0   Min.   :   0   Min.   :  0.0   Min.   :  0.00   Min.   :   0   Min.   :   0.0  
-##  1st Qu.:    3   1st Qu.:   0   1st Qu.:  0.0   1st Qu.:  0.00   1st Qu.:  64   1st Qu.:  19.1  
-##  Median :  395   Median :  14   Median :  0.0   Median :  0.00   Median : 374   Median :  58.6  
-##  Mean   : 2157   Mean   : 212   Mean   :  4.6   Mean   :  0.66   Mean   : 909   Mean   :  71.2  
-##  3rd Qu.:  740   3rd Qu.:  69   3rd Qu.:  0.0   3rd Qu.:  0.00   3rd Qu.:1674   3rd Qu.:  92.7  
-##  Max.   :45739   Max.   :7126   Max.   :640.4   Max.   :139.08   Max.   :5786   Max.   :1595.0  
-##                                                                                                 
-##    rRNA_5.8S        Nextera            HPV           HPV_as    
-##  Min.   : 0.00   Min.   : 49341   Min.   :   0   Min.   :   0  
-##  1st Qu.: 0.00   1st Qu.: 84018   1st Qu.: 726   1st Qu.: 266  
-##  Median : 0.45   Median :108882   Median :1414   Median : 509  
-##  Mean   : 1.53   Mean   :112714   Mean   :1613   Mean   : 561  
-##  3rd Qu.: 1.61   3rd Qu.:137054   3rd Qu.:2252   3rd Qu.: 779  
-##  Max.   :68.33   Max.   :252363   Max.   :6234   Max.   :2166  
+##            Run          Well       cell_id          low.complexity        SPIKE_1        
+##  1772-062-248:96   A01    :  5   Length:472         Min.   :   514.9   Min.   :    28.7  
+##  1772-062-249:96   A02    :  5   Class :character   1st Qu.:  2372.1   1st Qu.:   228.7  
+##  1772-064-103:88   A03    :  5   Mode  :character   Median :  3578.5   Median :  6109.2  
+##  1772-067-038:96   A04    :  5                      Mean   :  7829.0   Mean   : 41352.6  
+##  1772-067-039:96   A05    :  5                      3rd Qu.:  5841.9   3rd Qu.: 10084.8  
+##                    A06    :  5                      Max.   :253685.6   Max.   :652581.8  
+##                    (Other):442                                                           
+##     SPIKE_4            SPIKE_7           SPIKE_3           SPIKE_6            rRNA_18S      
+##  Min.   :    0.00   Min.   :   0.00   Min.   :  0.000   Min.   :  0.0000   Min.   :   0.00  
+##  1st Qu.:    3.31   1st Qu.:   0.00   1st Qu.:  0.000   1st Qu.:  0.0000   1st Qu.:  64.28  
+##  Median :  394.73   Median :  13.70   Median :  0.000   Median :  0.0000   Median : 373.79  
+##  Mean   : 2157.23   Mean   : 212.49   Mean   :  4.603   Mean   :  0.6645   Mean   : 909.24  
+##  3rd Qu.:  740.13   3rd Qu.:  68.56   3rd Qu.:  0.000   3rd Qu.:  0.0000   3rd Qu.:1674.44  
+##  Max.   :45739.29   Max.   :7125.99   Max.   :640.421   Max.   :139.0821   Max.   :5786.13  
+##                                                                                             
+##     rRNA_28S         rRNA_5.8S         Nextera            HPV             HPV_as      
+##  Min.   :   0.00   Min.   : 0.000   Min.   : 49341   Min.   :   0.0   Min.   :   0.0  
+##  1st Qu.:  19.06   1st Qu.: 0.000   1st Qu.: 84018   1st Qu.: 726.2   1st Qu.: 265.6  
+##  Median :  58.58   Median : 0.449   Median :108882   Median :1413.7   Median : 509.2  
+##  Mean   :  71.21   Mean   : 1.533   Mean   :112714   Mean   :1612.9   Mean   : 561.3  
+##  3rd Qu.:  92.68   3rd Qu.: 1.614   3rd Qu.:137054   3rd Qu.:2251.7   3rd Qu.: 778.7  
+##  Max.   :1595.00   Max.   :68.335   Max.   :252363   Max.   :6234.4   Max.   :2166.2  
 ## 
 ```
 
@@ -284,7 +294,7 @@ qplot(data=spikes.norm, x=SPIKE_1, geom="histogram", color=Run) +
 ## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
 ```
 
-![plot of chunk control-sequences_low_complexity](figure/control-sequences_low_complexity.png) 
+![plot of chunk control-sequences_low_complexity](figure/control-sequences_low_complexity-1.png) 
 
 ```r
 t.test(data=spikes.norm, low.complexity ~ factor(SPIKE_1 > spike1_threshold))
@@ -295,13 +305,13 @@ t.test(data=spikes.norm, low.complexity ~ factor(SPIKE_1 > spike1_threshold))
 ## 	Welch Two Sample t-test
 ## 
 ## data:  low.complexity by factor(SPIKE_1 > spike1_threshold)
-## t = -5.446, df = 54.78, p-value = 1.253e-06
+## t = -5.4456, df = 54.784, p-value = 1.253e-06
 ## alternative hypothesis: true difference in means is not equal to 0
 ## 95 percent confidence interval:
-##  -36320 -16778
+##  -36319.65 -16777.59
 ## sample estimates:
 ## mean in group FALSE  mean in group TRUE 
-##                4792               31340
+##            4791.682           31340.302
 ```
 
 ```r
@@ -311,7 +321,7 @@ spikes.norm.ok <- subset(spikes.norm, SPIKE_1 < spike1_threshold)
 [Back to top](#top)
 
 In the libraries with the expected fraction of spikes, the relation between
-SPIKE_1 and SPIKE_4 is nicely linear, except for the last two ones where
+SPIKE_1 and SPIKE_4 is linear, except for the last two ones where
 SPIKE_4's detection level are low and noisy.  Other spikes where hard to detect
 on purpose, to calculate the efficiency of the conversion from mRNA to sequence
 read.
@@ -324,7 +334,7 @@ ggplot(
 ) + geom_point() + facet_wrap('Run', scale='free') + scale_x_log10() + scale_y_log10()
 ```
 
-![plot of chunk control-sequences_proportions](figure/control-sequences_proportions.png) 
+![plot of chunk control-sequences_proportions](figure/control-sequences_proportions-1.png) 
 
 [Back to top](#top)
 
@@ -353,7 +363,7 @@ ggplot(
   ggtitle('Overview of the reference sequences detected with TagDust2')
 ```
 
-![plot of chunk control-sequences_overview](figure/control-sequences_overview.png) 
+![plot of chunk control-sequences_overview](figure/control-sequences_overview-1.png) 
 
 A small quantity of `1e-05` was added to avoid removing the zero values by the
 logarithmic scaling, which would have made the boxplots of SPIKE_3 and SPIKE_6

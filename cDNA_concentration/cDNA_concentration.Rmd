@@ -43,7 +43,7 @@ for all runs, on which a few quality controls are run.
 
 Each file is named following the serial ID of the C1 chip from which DNA was collected.
 
-The files are available from a [temporary location](BASEURL=https://briefcase.riken.jp/proself/publicweb/publicweb.go/RCkIQA6ZAohAcycBOlFL0_ZSt5-IUtPtwtvH_w-vUo79) and will be deposited in a proper place
+The files are available from [GitHub]() and will be deposited in a proper place
 later.  The files need to be downloaded before running this knitr script.
 
 ```{r engine="bash"}
@@ -80,7 +80,7 @@ readConcentrationTable <- function (FILE) {
                        , nrow  =  8
                        , head  = FALSE
                        , blank.lines.skip = FALSE )[,1:13]
-  colnames(picogreen) <- c('row', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
+  colnames(picogreen) <- c('Row', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
   picogreen
 }
 readConcentrationTable('1772-062-248.picogreen.xlsx')
@@ -92,17 +92,17 @@ _[ggplot2](http://ggplot2.org/)_.
 
 ```{r}
 meltConcentrationTable <- function (RUN, TABLE) {
-  picogreen <- melt(TABLE, id.vars='row')
-  colnames(picogreen) <- c('row', 'column', 'concentration')
-  picogreen[,"run"] <- RUN
-  picogreen[,"well"] <- paste(picogreen$row, picogreen$column, sep='')
-  picogreen <- picogreen[, c('run', 'well', 'row', 'column', 'concentration')]
+  picogreen <- melt(TABLE, id.vars='Row')
+  colnames(picogreen) <- c('Row', 'Column', 'Concentration')
+  picogreen[,"Run"] <- RUN
+  picogreen[,"Well"] <- paste(picogreen$Row, picogreen$Column, sep='')
+  picogreen <- picogreen[, c('Run', 'Well', 'Row', 'Column', 'Concentration')]
   picogreen
 }
 ```
 
 The function below outputs the data for one run, provided that a properly named
-file (`run id` plus `.picogreen.xlsx`) is available in the same directory.
+file (run ID plus `picogreen.xlsx`) is available in the same directory.
 
 ```{r}
 read_pg <- function(RUN) {
@@ -123,7 +123,7 @@ read_sc <- function(RUN) {
   FILE <- paste(RUN, "picogreen.xlsx", sep = ".")
   sc <- read.xls(FILE, sheet=3, skip=2, nrow=10, header=FALSE)[,c(2,5)]
   sc <- cbind(RUN, sc)
-  colnames(sc) <- c('run', 'dna', 'fluorescence')
+  colnames(sc) <- c('Run', 'dna', 'fluorescence')
   sc$fluorescence <- as.numeric(as.character(sc$fluorescence))
   return(sc)
 }
@@ -136,31 +136,31 @@ read_sc('1772-062-248')
 The file `cDNA_concentration.csv` is made from the files above using `R`, and has
 the following columns.
 
-### `run`
+### `Run`
 
-The serial ID of the C1 chip for a given run.  Example: `1772-062-248`.
+The serial ID of the C1 capture array for a given run.  Example: `1772-062-248`.
 
-### `well`
+### `Well`
 
 The coordinates in the 96-well plate where the cDNAs have been transferred at
 the end of the C1 run. Examples: `A01`, `F08`, `C12`, etc.  Combined with the
 run ID, this uniquely identifies a cell.
 
-### `row`
+### `Row`
 
 The row coordinates in the 96-well plate where the cDNAs have been transferred
 at the end of the run.  Possible values: `A`, `B`, `C`, `D`, `E`, `F`, `G` and
 `H`.
 
-### `column`
+### `Column`
 
 The column coordinates in the 96-well plate where the cDNAs have been
 transferred at the end of the run.  Possible values: `01`, `02`, `03`, `04`,
 `05`, `06`, `07`, `08`, `09`, `10`, `11` and `12`.
 
-### `concentration`
+### `Concentration`
 
-The DNA concentration, in ng/μL.
+The DNA concentration in ng/μL.
 
 
 <a name="save-data">Consolidated file (preparation)</a>
@@ -195,23 +195,23 @@ write.csv(file='cDNA_concentration.csv', picogreen, row.names=FALSE)
 
 There is a strong variation between runs.
 
-```{r cDNA_concentration_boxplot, message=FALSE, dev='svg', fig.height=3.5}
+```{r cDNA_concentration_boxplot, message=FALSE, dev=c("svg", "png"), fig.height=3.5}
 qplot( data=picogreen
-     , run
-     , concentration
+     , Run
+     , Concentration
      , geom="boxplot",
-     , colour=run) + coord_flip()
+     , colour=Run) + coord_flip()
 ```
 
 Still, for most runs except _1772-064-103_, it is possible to detect
 low-concentration outliers, were there probably was no cell in the chamber.
 Note that the scale of each histogram is different.
 
-```{r cDNA_concentration_histogram, message=FALSE, dev='svg', fig.height=3.5}
+```{r cDNA_concentration_histogram, message=FALSE, dev=c("svg", "png"), fig.height=3.5}
 qplot( data=picogreen
-     , concentration
+     , Concentration
      , geom="histogram"
-     , colour=run) + facet_wrap( ~run, scales='free')
+     , colour=Run) + facet_wrap( ~Run, scales='free')
 ```
 
 <a name='standard-curves'>Comparison between standard curves</a>
@@ -234,13 +234,13 @@ as suggested by the shifted standard curve, overall the calibration of the
 fluorometer is stable and does not explain the strong variations of the DNA
 yield. 
 
-```{r cDNA_concentration_standard_curves, dev='svg', warning=FALSE}
+```{r cDNA_concentration_standard_curves, dev=c("svg", "png"), warning=FALSE}
 ggplot(
   sc,
   aes(
     x=fluorescence,
     y=dna,
-    colour=run)
+    colour=Run)
 ) + geom_point() +
     geom_line() + 
     scale_x_log10('Average fluorescence (background subtracted)') +

@@ -1,4 +1,4 @@
-"Run","Lane","Sample.ID","Sample.Ref","Index","LSID","Project","Yield","Percent.PF","Reads","raw.clusters.per.lane","Perfect.Index.Reads","Q30.bases","Mean.Quality.Score","Well","row","column","Library","HiSeq_QC","cell_id"
+"Run","Lane","Sample.ID","Sample.Ref","Barcode","LSID","Project","Yield","Percent.PF","Reads","raw.clusters.per.lane","Perfect.Index.Reads","Q30.bases","Mean.Quality.Score","Well","Row","Column","Library","HiSeq_QC","cell_id"
 "1772-067-038","1","RNhi10396-A01","custom","TAAGGCGA-TAGATCGC","LS2079","LS2079_RNhi10396_Lane1",516,100,3415890,1.2,100,75.97,30.68,"A01","A","01","RNhi10396",TRUE,"1772-067-038_A01"
 "1772-067-038","1","RNhi10396-A02","custom","CGTACTAG-TAGATCGC","LS2079","LS2079_RNhi10396_Lane1",520,100,3444926,1.21,100,76.2,30.75,"A02","A","02","RNhi10396",TRUE,"1772-067-038_A02"
 "1772-067-038","1","RNhi10396-A03","custom","AGGCAGAA-TAGATCGC","LS2079","LS2079_RNhi10396_Lane1",427,100,2829392,0.99,100,74.62,30.25,"A03","A","03","RNhi10396",TRUE,"1772-067-038_A03"

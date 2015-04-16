@@ -63,7 +63,7 @@ Datasets
 
  - `Nextera.fa`: sequence of the Nextera primers according to <http://support.illumina.com/downloads/illumina-customer-sequence-letter.html>.
 
- - `hpv18.fa` and hpv18-as.fa`, sense and antisense HPV18 sequence from GenBank
+ - `hpv18.fa` and `hpv18-as.fa`, sense and antisense HPV18 sequence from GenBank
     record AY262282.  HeLa cells have a fragment of HPV inserted in their genome.
 
 ```{r control-sequences_spikes.fa, engine="sh"}
@@ -78,9 +78,9 @@ Detection of the spikes using TagDust.
 To run this section, [install
 TagDust](http://sourceforge.net/projects/tagdust/files/) version 2.06 in the
 current directory, unpack and compile it.  (This script can not use higher
-version of TagDust because the do not allow for the redirection of the output
+version of TagDust because they do not allow for the redirection of the output
 sequences to `/dev/null/`.), then, edit the RMarkdown code and remove the
-`eval=FALSE` statement.
+`eval=FALSE` statement. The TagDust counting with 8 CPU cores takes approximately 1 day.
 
 ```{r control-sequences_run_tagdust, engine="sh", eval=FALSE}
 TAGDUST=./tagdust-2.06/tagdust
@@ -92,10 +92,10 @@ do
 done
 ```
 
-Loops to create of a file called `spikes.txt`, where each line gives the number of
+Loops to create a file called `spikes.txt`, where each line gives the number of
 reads matching one given spike in one given file.
 
-```{r control-sequences_extract_data, engine="sh", dependson="control-sequences_run_tagdust"}
+```{r control-sequences_extract_data, warning=FALSE, engine="sh", dependson="control-sequences_run_tagdust"}
 for LIBRARY in 1772-062-248 1772-062-249 1772-064-103 1772-067-038 1772-067-039
 do
   for ROW in A B C D E F G H
@@ -105,7 +105,7 @@ do
       for READ in 1 2
       do
         grep -e rRNA -e SPIKE -e input -e complex -e Nextera -e HPV tagdust/${LIBRARY}_${ROW}${COLUMN}.${READ}* |
-          sed "s/^/$LIBRARY\tR$READ\t$ROW$COLUMN\t/"
+          perl -pe "s/^/$LIBRARY\tR$READ\t$ROW$COLUMN\t/"
       done
     done
   done
@@ -117,7 +117,7 @@ head spikes.txt
 Construction of a table in R
 ----------------------------
 
-```{r control-sequences_load_data, dependson="control-sequences_extract_data", dev="svg"}
+```{r control-sequences_load_data, dependson="control-sequences_extract_data", dev=c("svg", "png")}
 library(reshape)
 library(ggplot2)
 
@@ -135,8 +135,8 @@ lower (see below).  There is not much difference between the counts from Reads
 1 and 2, except for the Nextera primers where reverse primers are found in Read
 1 and forward primers in Read 2
 
-In the next steps, the data is transformed in a matrix of counts, which are
-then normalised as a percentage of the total number of reads.  Counts from Read
+In the next steps, the data is transformed to a matrix of counts, which are
+then converted as a percentage of the total number of reads.  Counts from Read
 1 and Read 2 are averaged, and counts for the Nextera primers are summed.
 
 ```{r control-sequences_create_table, dependson="control-sequences_load_data"}
@@ -218,7 +218,7 @@ spikes.norm.ok <- subset(spikes.norm, SPIKE_1 < spike1_threshold)
 [Back to top](#top)
 
 In the libraries with the expected fraction of spikes, the relation between
-SPIKE_1 and SPIKE_4 is nicely linear, except for the last two ones where
+SPIKE_1 and SPIKE_4 is linear, except for the last two ones where
 SPIKE_4's detection level are low and noisy.  Other spikes where hard to detect
 on purpose, to calculate the efficiency of the conversion from mRNA to sequence
 read.

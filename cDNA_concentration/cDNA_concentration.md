@@ -40,7 +40,7 @@ for all runs, on which a few quality controls are run.
 
 Each file is named following the serial ID of the C1 chip from which DNA was collected.
 
-The files are available from a [temporary location](BASEURL=https://briefcase.riken.jp/proself/publicweb/publicweb.go/RCkIQA6ZAohAcycBOlFL0_ZSt5-IUtPtwtvH_w-vUo79) and will be deposited in a proper place
+The files are available from [GitHub]() and will be deposited in a proper place
 later.  The files need to be downloaded before running this knitr script.
 
 
@@ -88,14 +88,14 @@ readConcentrationTable <- function (FILE) {
                        , nrow  =  8
                        , head  = FALSE
                        , blank.lines.skip = FALSE )[,1:13]
-  colnames(picogreen) <- c('row', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
+  colnames(picogreen) <- c('Row', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
   picogreen
 }
 readConcentrationTable('1772-062-248.picogreen.xlsx')
 ```
 
 ```
-##   row    01    02    03    04    05    06    07    08    09    10    11    12
+##   Row    01    02    03    04    05    06    07    08    09    10    11    12
 ## 1   A 3.743 0.173 2.832 3.739 4.200 4.485 2.444 0.091 4.404 0.046 1.672 4.781
 ## 2   B 3.099 3.935 3.927 2.192 3.958 0.101 0.243 2.229 0.099 4.557 3.287 4.028
 ## 3   C 4.190 0.095 2.545 4.009 3.756 3.064 3.155 0.116 4.217 2.505 0.138 3.847
@@ -113,17 +113,17 @@ _[ggplot2](http://ggplot2.org/)_.
 
 ```r
 meltConcentrationTable <- function (RUN, TABLE) {
-  picogreen <- melt(TABLE, id.vars='row')
-  colnames(picogreen) <- c('row', 'column', 'concentration')
-  picogreen[,"run"] <- RUN
-  picogreen[,"well"] <- paste(picogreen$row, picogreen$column, sep='')
-  picogreen <- picogreen[, c('run', 'well', 'row', 'column', 'concentration')]
+  picogreen <- melt(TABLE, id.vars='Row')
+  colnames(picogreen) <- c('Row', 'Column', 'Concentration')
+  picogreen[,"Run"] <- RUN
+  picogreen[,"Well"] <- paste(picogreen$Row, picogreen$Column, sep='')
+  picogreen <- picogreen[, c('Run', 'Well', 'Row', 'Column', 'Concentration')]
   picogreen
 }
 ```
 
 The function below outputs the data for one run, provided that a properly named
-file (`run id` plus `.picogreen.xlsx`) is available in the same directory.
+file (run ID plus `picogreen.xlsx`) is available in the same directory.
 
 
 ```r
@@ -137,7 +137,7 @@ head(read_pg('1772-062-248'))
 ```
 
 ```
-##            run well row column concentration
+##            Run Well Row Column Concentration
 ## 1 1772-062-248  A01   A     01         3.743
 ## 2 1772-062-248  B01   B     01         3.099
 ## 3 1772-062-248  C01   C     01         4.190
@@ -156,7 +156,7 @@ read_sc <- function(RUN) {
   FILE <- paste(RUN, "picogreen.xlsx", sep = ".")
   sc <- read.xls(FILE, sheet=3, skip=2, nrow=10, header=FALSE)[,c(2,5)]
   sc <- cbind(RUN, sc)
-  colnames(sc) <- c('run', 'dna', 'fluorescence')
+  colnames(sc) <- c('Run', 'dna', 'fluorescence')
   sc$fluorescence <- as.numeric(as.character(sc$fluorescence))
   return(sc)
 }
@@ -164,7 +164,7 @@ read_sc('1772-062-248')
 ```
 
 ```
-##             run        dna fluorescence
+##             Run        dna fluorescence
 ## 1  1772-062-248 2.00000000     560415.0
 ## 2  1772-062-248 1.00000000     332109.0
 ## 3  1772-062-248 0.50000000     144873.0
@@ -183,31 +183,31 @@ read_sc('1772-062-248')
 The file `cDNA_concentration.csv` is made from the files above using `R`, and has
 the following columns.
 
-### `run`
+### `Run`
 
-The serial ID of the C1 chip for a given run.  Example: `1772-062-248`.
+The serial ID of the C1 capture array for a given run.  Example: `1772-062-248`.
 
-### `well`
+### `Well`
 
 The coordinates in the 96-well plate where the cDNAs have been transferred at
 the end of the C1 run. Examples: `A01`, `F08`, `C12`, etc.  Combined with the
 run ID, this uniquely identifies a cell.
 
-### `row`
+### `Row`
 
 The row coordinates in the 96-well plate where the cDNAs have been transferred
 at the end of the run.  Possible values: `A`, `B`, `C`, `D`, `E`, `F`, `G` and
 `H`.
 
-### `column`
+### `Column`
 
 The column coordinates in the 96-well plate where the cDNAs have been
 transferred at the end of the run.  Possible values: `01`, `02`, `03`, `04`,
 `05`, `06`, `07`, `08`, `09`, `10`, `11` and `12`.
 
-### `concentration`
+### `Concentration`
 
-The DNA concentration, in ng/μL.
+The DNA concentration in ng/μL.
 
 
 <a name="save-data">Consolidated file (preparation)</a>
@@ -239,7 +239,7 @@ summary(picogreen)
 ```
 
 ```
-##      run                well                row          column    concentration   
+##      Run                Well                Row          Column    Concentration   
 ##  Length:480         Length:480         A      : 60   01     : 40   Min.   :0.0040  
 ##  Class :character   Class :character   B      : 60   02     : 40   1st Qu.:0.3125  
 ##  Mode  :character   Mode  :character   C      : 60   03     : 40   Median :1.0120  
@@ -261,13 +261,13 @@ There is a strong variation between runs.
 
 ```r
 qplot( data=picogreen
-     , run
-     , concentration
+     , Run
+     , Concentration
      , geom="boxplot",
-     , colour=run) + coord_flip()
+     , colour=Run) + coord_flip()
 ```
 
-![plot of chunk cDNA_concentration_boxplot](figure/cDNA_concentration_boxplot-1.svg) 
+![plot of chunk cDNA_concentration_boxplot](figure/cDNA_concentration_boxplot-1.png) 
 
 Still, for most runs except _1772-064-103_, it is possible to detect
 low-concentration outliers, were there probably was no cell in the chamber.
@@ -276,12 +276,12 @@ Note that the scale of each histogram is different.
 
 ```r
 qplot( data=picogreen
-     , concentration
+     , Concentration
      , geom="histogram"
-     , colour=run) + facet_wrap( ~run, scales='free')
+     , colour=Run) + facet_wrap( ~Run, scales='free')
 ```
 
-![plot of chunk cDNA_concentration_histogram](figure/cDNA_concentration_histogram-1.svg) 
+![plot of chunk cDNA_concentration_histogram](figure/cDNA_concentration_histogram-1.png) 
 
 <a name='standard-curves'>Comparison between standard curves</a>
 ----------------------------------------------------------------
@@ -311,14 +311,14 @@ ggplot(
   aes(
     x=fluorescence,
     y=dna,
-    colour=run)
+    colour=Run)
 ) + geom_point() +
     geom_line() + 
     scale_x_log10('Average fluorescence (background subtracted)') +
     scale_y_log10('DNA concentration (ng/μL)')
 ```
 
-![plot of chunk cDNA_concentration_standard_curves](figure/cDNA_concentration_standard_curves-1.svg) 
+![plot of chunk cDNA_concentration_standard_curves](figure/cDNA_concentration_standard_curves-1.png) 
 
 Session Info
 ------------
@@ -329,13 +329,11 @@ sessionInfo()
 ```
 
 ```
-## R version 3.1.1 (2014-07-10)
-## Platform: x86_64-pc-linux-gnu (64-bit)
+## R version 3.1.0 (2014-04-10)
+## Platform: x86_64-apple-darwin13.1.0 (64-bit)
 ## 
 ## locale:
-##  [1] LC_CTYPE=fr_FR.utf8       LC_NUMERIC=C              LC_TIME=fr_FR.utf8        LC_COLLATE=fr_FR.utf8    
-##  [5] LC_MONETARY=fr_FR.utf8    LC_MESSAGES=fr_FR.utf8    LC_PAPER=fr_FR.utf8       LC_NAME=C                
-##  [9] LC_ADDRESS=C              LC_TELEPHONE=C            LC_MEASUREMENT=fr_FR.utf8 LC_IDENTIFICATION=C      
+## [1] C
 ## 
 ## attached base packages:
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
@@ -344,7 +342,7 @@ sessionInfo()
 ## [1] reshape_0.8.5 ggplot2_1.0.0 gdata_2.13.3 
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] colorspace_1.2-4 digest_0.6.4     evaluate_0.5.5   formatR_1.0      grid_3.1.1       gtable_0.1.2    
-##  [7] gtools_3.4.1     knitr_1.8        labeling_0.3     MASS_7.3-34      munsell_0.4.2    plyr_1.8.1      
-## [13] proto_0.3-10     Rcpp_0.11.3      reshape2_1.4     scales_0.2.4     stringr_0.6.2    tools_3.1.1
+##  [1] MASS_7.3-35      Rcpp_0.11.3      colorspace_1.2-4 digest_0.6.6     evaluate_0.5.5   formatR_1.0     
+##  [7] grid_3.1.0       gtable_0.1.2     gtools_3.4.1     knitr_1.8        labeling_0.3     munsell_0.4.2   
+## [13] plyr_1.8.1       proto_0.3-10     reshape2_1.4.1   scales_0.2.4     stringr_0.6.2    tools_3.1.0
 ```

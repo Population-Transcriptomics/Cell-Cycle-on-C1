@@ -66,7 +66,7 @@ qc <- read.xls( "HiSeq.xlsx",
     'Lane',
     'Sample.ID',
     'Sample.Ref',
-    'Index',
+    'Barcode',
     'Description',
     'Control',
     'Project',
@@ -83,15 +83,15 @@ qc <- read.xls( "HiSeq.xlsx",
 The `Sample.ID` column contains identifiers made of the library ID attributed
 by our facility, followed by `-`, follow by a well ID in 96-well plate format.
 
-`row` and `column` refer to the coordinates in the 96-well plates (where the multiplexing reaction
+`Row` and `Column` refer to the coordinates in the 96-well plates (where the multiplexing reaction
 was done).
 
 ```{r}
 qc$Lane <- factor(qc$Lane)
 qc$Well <- factor(sub('RNhi.....-', '', qc$Sample.ID))
 qc[qc$Well == 'Undetermined', 'Well'] <- NA
-qc$row    <- factor(substr(qc$Well, 1, 1))
-qc$column <- factor(substr(qc$Well, 2, 3))
+qc$Row    <- factor(substr(qc$Well, 1, 1))
+qc$Column <- factor(substr(qc$Well, 2, 3))
 qc$Q30.bases <- as.numeric(as.character(qc$Q30.bases))
 qc$Mean.Quality.Score <- as.numeric(as.character(qc$Mean.Quality.Score))
 qc$Library <- sub('-...','', qc$Sample.ID)
@@ -118,7 +118,7 @@ paired-end (two reads per pair).
 
 ### Looking for run bias
 
-```{r HiSeq_run_comparison, dev='svg'}
+```{r HiSeq_run_comparison, dev=c("svg", "png")}
 qplot(data = qc[!is.na(qc$Well),], Run, Reads, geom = "boxplot")
 ```
 
@@ -127,9 +127,9 @@ qplot(data = qc[!is.na(qc$Well),], Run, Reads, geom = "boxplot")
 Do not worry too much about the shape of the boxplots, this is because there
 are few points per run (8 for columns and 12 for rows).
 
-```{r HiSeq_plate_comparison, dev='svg'}
-qplot(data = qc[!is.na(qc$Well),], row, Reads, geom = "boxplot") + facet_wrap(~Run)
-qplot(data = qc[!is.na(qc$Well),], column, Reads, geom = "boxplot") + facet_wrap(~Run)
+```{r HiSeq_plate_comparison, dev=c("svg", "png")}
+qplot(data = qc[!is.na(qc$Well),], Row, Reads, geom = "boxplot") + facet_wrap(~Run)
+qplot(data = qc[!is.na(qc$Well),], Column, Reads, geom = "boxplot") + facet_wrap(~Run)
 ```
 
 In C1 run `1772-064-103`, the plate column `09` has clearly been pipetted in

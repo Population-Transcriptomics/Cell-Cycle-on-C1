@@ -1,12 +1,7 @@
----
-title: "Fluorescence measured in ImageJ"
-output: html_document
-date: "Friday, January 23, 2015"
----
 ```{r echo=FALSE}
 knitr::opts_knit$set(verbose = TRUE)
-options(width=100)
 opts_chunk$set(fig.width=10)
+options(width=120)
 ```
 
 ```{r}
@@ -18,7 +13,13 @@ resultsUser2 <- "Results_SetArea_Measure_UserConfirm_User2.txt"
 
 ## Summary
 
-Images of *Fucci* cells loaded in the C1 capture array, were taken before cell lysis. Three modes have been used for imaging: bright field (BF), Green and Red. [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the Cellomics specific C01 format were used for measuring fluorescence intensities and reporting errors in [Fiji ImageJ](http://fiji.sc/Fiji) All platforms version by using the macro [`r scriptName`](`r scriptName`). The usage of this macro is illustrated in the accompanying PDF file [`r pdfName`](`r pdfName`). The macro will ask the user to select the directory which contains all the raw image files. 
+Images of *Fucci* cells loaded in the C1 capture array, were taken before cell lysis. 
+Three modes have been used for imaging: bright field (BF), Green and Red. 
+[Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the
+Cellomics specific C01 format were used for measuring fluorescence intensities and reporting errors in 
+[Fiji ImageJ](http://fiji.sc/Fiji). All platforms version by using the macro [`r scriptName`](`r scriptName`).
+The usage of this macro is illustrated in the accompanying PDF file [`r pdfName`](`r pdfName`). 
+The macro will ask the user to select the directory which contains all the raw image files. 
 The following procedures are done:  
 
 * Open images one by one: first bright field, then Green, then Red channel images
@@ -29,23 +30,34 @@ The following procedures are done:
 * Record the file name, coordinates, size of area, mean intnsity, standard deviation, minimum and maximum intensities and an Error report
 * Repeat the previous steps for every set of three images in the folder
 
-The Fiji ImageJ macro was run independently by Elo Madissoon, User 1 (file [`r resultsUser1`](`r resultsUser1`)) and Michael Böttcher, User 2 (file [`r resultsUser2`](`r resultsUser2`)). The current document explains the [column names](#names) in the results files, analyzes the [consistency](#consistency) of the measurements, compares and finds consensus in the [error reporting](#errorreport) and gives an [overview](#overview) of the final values.
+The Fiji ImageJ macro was run independently by Elo Madissoon, User 1 (file [`r resultsUser1`](`r resultsUser1`))
+and Michael Böttcher, User 2 (file [`r resultsUser2`](`r resultsUser2`)). 
+The current document explains the [column names](#names) in the results file, 
+analyzes the [consistency](#consistency) of the measurements, compares and finds consensus in the 
+[error reporting](#errorreport) and gives an [overview](#overview) of the final values.
 
 ### <a name='names'>Column names</a>
 
-#### cell_id
+### `cell_id`
+
 Identifier of the well, which is the common part of the filename for all channels (bright field, red and green)
 
-#### cell_coord_x and cell_coord_y
+### `cell_coord_x` and `cell_coord_y`
+
 Pixel coordinates of the upper left corner of the smallest rectangle that completely contain the selection area.
 
-#### area
+### `area`
+
 Size of the selection area.
 
-#### mean, std, min, max
-mean, standard deviation, minimum and maximum fluorescence intensity in the selection. Corresponding measurements to the background area (adjacent to the cell) when prefix is "bg." and to green channel or red channel when the suffix is ".ch2" or ".ch3" correspondingly.
+### `mean`, `std`, `min`, `max`
 
-#### Error
+mean, standard deviation, minimum and maximum fluorescence intensity in the selection. 
+Corresponding measurements to the background area (adjacent to the cell) when prefix is "bg." 
+and to green channel or red channel when the suffix is ".ch2" or ".ch3" correspondingly.
+
+### `Error`
+
 The error types:
 - "0-No Error" (default)
 - "1-No cell"
@@ -53,8 +65,13 @@ The error types:
 - "3-OutOfFocus"
 - "4-MultipleCells"
 
-#### Comment
+### `Comment`
+
 Write additional notes here, if necessary. Deafults to "No comment"
+
+### `Discard`
+
+A boolean value is given to each cell depending on the error type (e.g. "0-No Error" corresponds to FALSE)
 
 
 ### <a name='consistency'>Consistency of ImageJ measurements</a>
@@ -88,44 +105,44 @@ colnames(user2)
 
 The cell location has to be manually set for all bright field images. The correalation of the cell coordinates reflects reproducibility of the cell location determination. The correlation of fluorescence intensities reflects the reproducibility of the results. The correlation between cell coordinates and fluorescence values is plotted, color coded by Run.
 
-```{r}
+```{r user-correlation_plots, dev=c("svg", "png")}
 subb <- substr(user1$cell_id, 1, 12)
-mfrow.orig <- par(mfrow <- c(1, 2))
+mfrow.orig <- par(mfrow=c(1,2))
 plot(user1$cell_coord_x, user2$cell_coord_x, col=as.factor(subb), main="Correlation of the x-coordinates", xlab="User 1", ylab="User 2")
-legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5))
+legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5), text.col=c(1:5), bty="n")
 plot(user1$cell_coord_y, user2$cell_coord_y, col=as.factor(subb), main="Correlation of the y-coordinates", xlab="User 1", ylab="User 2")
-legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5))
+legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5), text.col=c(1:5), bty="n")
 plot(user1$mean_ch2, user2$mean_ch2, main="Correlation of measures in Ch2, green", xlab="User 1", ylab="User 2")
-legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5))
+legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5), text.col=c(1:5), bty="n")
 plot(user1$mean_ch3, user2$mean_ch3, main="Correlation of measures in Ch3, red", xlab="User 1", ylab="User 2")
-legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5))
+legend("topleft", legend=c(levels(as.factor(subb))), pch=1, col=c(1:5), text.col=c(1:5), bty="n")
 ```
 
 The cell loacation and fluorescence mean values correlate with each other between the two repeated measurements.  
 
 The mean, minimum, maximum and standard deviation are expected to correlate among themselves, in both green and red channel and between the two independent scorings.
 
-```{r, fig.height=7}
-pairs(cbind(user1.mean = user1$mean_ch2, user2.mean = user2$mean_ch2, em.min = user1$min_ch2, user2.min = user2$min_ch2, user1.max = user1$max_ch2, user2.max = user2$max_ch2, user1.std = user1$std.ch2, user2.std = user2$std.ch2), lower.panel=panel.smooth, upper.panel=panel.cor, main="Comparison of values in Channel 2, green")
-pairs(cbind(user1.mean = user1$mean.ch3, user2.mean = user2$mean.ch3, user1.min = user1$min.ch3, user2.min = user2$min.ch3, user1.max = user1$max.ch3, user2.max = user2$max.ch3, user1.std = user1$std.ch3, user2.std = user2$std.ch3), lower.panel=panel.smooth, upper.panel=panel.cor, main="Comparison of values in Channel 3, red")
+```{r pairwise_plots, fig.height=7, dev=c("svg", "png")}
+pairs(cbind(user1.mean = user1$mean_ch2, user2.mean = user2$mean_ch2, user1.min = user1$min_ch2, user2.min = user2$min_ch2, user1.max = user1$max_ch2, user2.max = user2$max_ch2, user1.std = user1$std_ch2, user2.std = user2$std_ch2), lower.panel=panel.smooth, upper.panel=panel.cor, main="Comparison of values in Channel 2, green")
+pairs(cbind(user1.mean = user1$mean.ch3, user2.mean = user2$mean_ch3, user1.min = user1$min.ch3, user2.min = user2$min_ch3, user1.max = user1$max_ch3, user2.max = user2$max_ch3, user1.std = user1$std_ch3, user2.std = user2$std_ch3), lower.panel=panel.smooth, upper.panel=panel.cor, main="Comparison of values in Channel 3, red")
 ```
 
 Mean, maximum and standard deviation correlate well with each other in both channels for both scorings. The minimum values are not correlating as good. This can be explained the by lower range of values and different distribution of fluorescence values inside the cell. The middle and nucleus of the cell is more fluorescent, while the membrane of the cell does not have any fluorescence in well focused images. 
 
 Compare the intensity levels of fluroescence in respect to the error type and background.
 
-```{r, fig.height=4}
-par(mfrow <- c(2, 2))
+```{r errortype_boxplots, fig.height=4, dev=c("svg", "png")}
+par(mfrow <- c(2,2))
 mar.orig <- par(mar=c(5.1, 10.0, 4.1, 2.1))
 
 flBoxplot <- function (DATA){
-  title.2=paste("Fluorescence by ",deparse(substitute(DATA)),", green",sep="")
-  title.3=paste("Fluorescence by ",deparse(substitute(DATA)),", red",sep="")
-  y=c(as.character(DATA[,"Error"]),rep("background",nrow(DATA)))
+  title.2=paste("Fluorescence by ", deparse(substitute(DATA)),", green",sep="")
+  title.3=paste("Fluorescence by ", deparse(substitute(DATA)),", red",sep="")
+  y=c(as.character(DATA[,"Error"]), rep("background", nrow(DATA)))
   x.ch2=c(DATA[,"mean_ch2"],DATA[,"bg_mean_ch2"])
   x.ch3=c(DATA[,"mean_ch3"],DATA[,"bg_mean_ch3"])
-  boxplot( x_ch2~y, main=title.2, las=1, horizontal=TRUE)
-  boxplot( x_ch3~y, main=title.3, las=1, horizontal=TRUE)
+  boxplot( x.ch2~y, main=title.2, las=1, horizontal=TRUE)
+  boxplot( x.ch3~y, main=title.3, las=1, horizontal=TRUE)
 }
 
 flBoxplot(user1)
@@ -135,7 +152,7 @@ flBoxplot(user2)
 
 The low fluorescence value in wells with error *1-No cell* is expected and is similar to the background levels of fluorescence in both green and red channel. Cells classified as *2-Debris* could be defragmented cells, which have not lost their fluroescence, therefore the values are varying. The boxplots indicate that error report are different for *2-Debris* definition between two scorings. 
 
-###<a name='errorreport'>Error report</a>
+### <a name='errorreport'>Error report</a>
 
 Observe the number of similar and different error scores between User 1 and User 2 and the number of various classifications for both scorings.
 
@@ -144,7 +161,7 @@ summary(user1$Error == user2$Error)
 cbind(user1.error = summary(user1$Error), user2.error = summary(user2$Error))
 ```
 
-The error reportings differ between the two observers. Display the wells where reports differ, but at least one report has "0-No Error". Add "Comment" column from User 2, since there were no comments from User 1 for these cells.
+The error reportings differ between the two observers. Display the wells where reports differ, but at least one report has "0-No Error". Add `Comment` column from User 2, since there were no comments from User 1 for these cells.
 
 ```{r}
 # Error report differences
@@ -173,27 +190,27 @@ d$error[match(Consensus_Keep, d$cell),] <- "0-No Error"
 d[,c(-4)]
 ```
 
-Report from User 1 used for final fluorescence values. Prepare additional columns for Run and Well. Rename errors in Error column to match the consensus error report. Add discard column for wells with consensus errors and outliers (fluorescence > 200). 
+Report from User 1 used for final fluorescence values. Prepare additional columns for `Run` and `Well`. Rename errors in `Error` column to match the consensus error report. Add `Discard` column for wells with consensus errors and outliers (fluorescence > 200). 
 
 
 ```{r}
 user1$Well <- substr(user1$cell_id, 14, 16)
-user1$Run <- as.factor(paste(substr(subb, 1, 4), substr(subb, 6, 8),substr(subb, 10, 13),sep="-"))
+user1$Run <- as.factor(paste(substr(subb, 1, 4), substr(subb, 6, 8),substr(subb, 10, 13), sep="-"))
 user1$Well <- as.factor(user1$Well)
 user1$Error[match(d$cell, user1$cell_id)] <- d$error
-user1$discard=FALSE
-user1[user1$Error != "0-No Error", "discard"] <- TRUE  
-user1[user1$mean_ch3 > 200, "discard"] <- TRUE
-user1[user1$mean_ch2 > 200, "discard"] <- TRUE
+user1$Discard <- FALSE
+user1[user1$Error != "0-No Error", "Discard"] <- TRUE  
+user1[user1$mean_ch3 > 200, "Discard"] <- TRUE
+user1[user1$mean_ch2 > 200, "Discard"] <- TRUE
 
 ```
 
-###<a name='overview'>Overview and Conclusions</a>
+### <a name='overview'>Overview and Conclusions</a>
 
 * The ImageJ macro produces reproducible results in the x and y coordinates and in the mean values of fluorescence
 * The mean, standard deviation and maxium values correlate well with each other in both the green and the red channels
 * A consensus was achieved with respect to the error type
-* Fluorescence table was saved as *Results_fluorescence.txt*
+* Fluorescence table was saved as `Results_fluorescence.txt`
 
 ```{r}
 summary(user1)
