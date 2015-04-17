@@ -670,7 +670,7 @@ step2 &lt;- adjustFucci(data=step1, transform=&quot;bc&quot;, maxMix=3, referenc
 final &lt;- contrastFucci(data=step3, channel=&quot;Ch3&quot;)
 # create table with corrected fluorescence values
 correctedFluo &lt;- data.frame(final$samples, final$corrected.exprs, final$corrected.transformed.exprs)
-names(correctedFluo) &lt;- c(&quot;cell_id&quot;, &quot;Ch2_corrected&quot;, &quot;Ch3_corrected&quot;, &quot;Ch2_corrected_transformed&quot;, &quot;Ch3_corrected_transformed&quot;)
+names(correctedFluo) &lt;- c(&quot;cell_id&quot;, &quot;ch2_corrected&quot;, &quot;ch3_corrected&quot;, &quot;ch2_corrected_transformed&quot;, &quot;ch3_corrected_transformed&quot;)
 write.csv(correctedFluo, &quot;correctedIntensities.csv&quot;, row.names=F)
 </code></pre>
 

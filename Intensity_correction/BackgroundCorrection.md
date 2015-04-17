@@ -497,6 +497,6 @@ step3 <- contrastFucci(data=step2, channel="Ch2")
 final <- contrastFucci(data=step3, channel="Ch3")
 # create table with corrected fluorescence values
 correctedFluo <- data.frame(final$samples, final$corrected.exprs, final$corrected.transformed.exprs)
-names(correctedFluo) <- c("cell_id", "Ch2_corrected", "Ch3_corrected", "Ch2_corrected_transformed", "Ch3_corrected_transformed")
+names(correctedFluo) <- c("cell_id", "ch2_corrected", "ch3_corrected", "ch2_corrected_transformed", "ch3_corrected_transformed")
 write.csv(correctedFluo, "correctedIntensities.csv", row.names=F)
 ```
