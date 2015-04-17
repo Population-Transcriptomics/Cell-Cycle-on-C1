@@ -69,7 +69,7 @@ The error types:
 
 Write additional notes here, if necessary. Deafults to "No comment"
 
-### `Discard`
+### `Fluo_QC`
 
 A boolean value is given to each cell depending on the error type (e.g. "0-No Error" corresponds to FALSE)
 
@@ -99,7 +99,6 @@ panel.cor <- function(x, y, digits=2, prefix="", cex.cor) {
 
 user1 <- read.table(resultsUser1, header=TRUE, sep="\t", row.names=1)
 user2 <- read.table(resultsUser2, header=TRUE, sep="\t", row.names=1)
-summary(user1)
 colnames(user2)
 ```
 
@@ -190,7 +189,7 @@ d$error[match(Consensus_Keep, d$cell),] <- "0-No Error"
 d[,c(-4)]
 ```
 
-Report from User 1 used for final fluorescence values. Prepare additional columns for `Run` and `Well`. Rename errors in `Error` column to match the consensus error report. Add `Discard` column for wells with consensus errors and outliers (fluorescence > 200). 
+Report from User 1 used for final fluorescence values. Prepare additional columns for `Run` and `Well`. Rename errors in `Error` column to match the consensus error report. Add `Fluo_QC` column for wells with consensus errors and outliers (fluorescence > 200). 
 
 
 ```{r}
@@ -198,10 +197,10 @@ user1$Well <- substr(user1$cell_id, 14, 16)
 user1$Run <- as.factor(paste(substr(subb, 1, 4), substr(subb, 6, 8),substr(subb, 10, 13), sep="-"))
 user1$Well <- as.factor(user1$Well)
 user1$Error[match(d$cell, user1$cell_id)] <- d$error
-user1$Discard <- FALSE
-user1[user1$Error != "0-No Error", "Discard"] <- TRUE  
-user1[user1$mean_ch3 > 200, "Discard"] <- TRUE
-user1[user1$mean_ch2 > 200, "Discard"] <- TRUE
+user1$Fluo_QC <- FALSE
+user1[user1$Error != "0-No Error", "Fluo_QC"] <- TRUE  
+user1[user1$mean_ch3 > 200, "Fluo_QC"] <- TRUE
+user1[user1$mean_ch2 > 200, "Fluo_QC"] <- TRUE
 
 ```
 
@@ -211,6 +210,7 @@ user1[user1$mean_ch2 > 200, "Discard"] <- TRUE
 * The mean, standard deviation and maxium values correlate well with each other in both the green and the red channels
 * A consensus was achieved with respect to the error type
 * Fluorescence table was saved as `Results_fluorescence.txt`
+* There are image files for 378 cells, and for 102 cells of the runs 1772-062-248, 1772-062-249 and 1772-064-103, some of the data was lost because of a case-sensitivity bug 
 
 ```{r}
 summary(user1)

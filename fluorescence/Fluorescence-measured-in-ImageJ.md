@@ -69,7 +69,7 @@ The error types:
 
 Write additional notes here, if necessary. Deafults to "No comment"
 
-### `Discard`
+### `Fluo_QC`
 
 A boolean value is given to each cell depending on the error type (e.g. "0-No Error" corresponds to FALSE)
 
@@ -100,53 +100,6 @@ panel.cor <- function(x, y, digits=2, prefix="", cex.cor) {
 
 user1 <- read.table(resultsUser1, header=TRUE, sep="\t", row.names=1)
 user2 <- read.table(resultsUser2, header=TRUE, sep="\t", row.names=1)
-summary(user1)
-```
-
-```
-##              cell_id     cell_coord_x    cell_coord_y        area          mean_ch2         std_ch2       
-##  1772-062-248_A01:  1   Min.   :170.0   Min.   :151.0   Min.   :214.6   Min.   : 14.93   Min.   :  3.810  
-##  1772-062-248_A02:  1   1st Qu.:217.2   1st Qu.:166.2   1st Qu.:214.6   1st Qu.: 23.32   1st Qu.:  5.301  
-##  1772-062-248_A03:  1   Median :233.5   Median :176.0   Median :214.6   Median : 29.80   Median :  8.095  
-##  1772-062-248_A04:  1   Mean   :247.4   Mean   :188.4   Mean   :221.2   Mean   : 43.12   Mean   : 19.783  
-##  1772-062-248_A05:  1   3rd Qu.:259.0   3rd Qu.:206.0   3rd Qu.:228.0   3rd Qu.: 60.15   3rd Qu.: 27.661  
-##  1772-062-248_A06:  1   Max.   :363.0   Max.   :254.0   Max.   :228.0   Max.   :218.37   Max.   :128.649  
-##  (Other)         :372                                                                                     
-##     min_ch2         max_ch2       bg_coord_ch2_x  bg_coord_ch2_y   bg_area_ch2     bg_mean_ch2      bg_std_ch2   
-##  Min.   : 0.00   Min.   : 25.00   Min.   :120.0   Min.   :161.0   Min.   :214.6   Min.   :14.94   Min.   :3.609  
-##  1st Qu.: 9.00   1st Qu.: 38.00   1st Qu.:168.0   1st Qu.:216.0   1st Qu.:214.6   1st Qu.:16.93   1st Qu.:4.467  
-##  Median :12.00   Median : 52.00   Median :183.5   Median :225.5   Median :214.6   Median :21.96   Median :4.670  
-##  Mean   :12.95   Mean   : 91.26   Mean   :197.4   Mean   :237.9   Mean   :221.2   Mean   :20.86   Mean   :4.681  
-##  3rd Qu.:16.00   3rd Qu.:128.50   3rd Qu.:209.0   3rd Qu.:255.8   3rd Qu.:228.0   3rd Qu.:22.87   3rd Qu.:4.889  
-##  Max.   :67.00   Max.   :488.00   Max.   :313.0   Max.   :304.0   Max.   :228.0   Max.   :27.25   Max.   :5.501  
-##                                                                                                                  
-##    bg_min_ch2      bg_max_ch2       area_ch3        mean_ch3         std_ch3           min_ch3          max_ch3     
-##  Min.   : 0.00   Min.   :24.00   Min.   :214.6   Min.   : 10.39   Min.   :  3.827   Min.   :  0.00   Min.   : 19.0  
-##  1st Qu.: 6.00   1st Qu.:30.00   1st Qu.:214.6   1st Qu.: 16.70   1st Qu.:  4.872   1st Qu.:  4.00   1st Qu.: 30.0  
-##  Median : 9.00   Median :34.00   Median :214.6   Median : 39.83   Median : 17.341   Median :  6.00   Median : 90.5  
-##  Mean   : 8.68   Mean   :33.16   Mean   :221.2   Mean   : 47.88   Mean   : 27.816   Mean   :  9.68   Mean   :115.1  
-##  3rd Qu.:11.00   3rd Qu.:36.00   3rd Qu.:228.0   3rd Qu.: 68.30   3rd Qu.: 43.501   3rd Qu.: 12.00   3rd Qu.:169.0  
-##  Max.   :17.00   Max.   :42.00   Max.   :228.0   Max.   :238.86   Max.   :147.678   Max.   :116.00   Max.   :515.0  
-##                                                                                                                     
-##  bg_coord_ch3_x  bg_coord_ch3_y   bg_area_ch3     bg_mean_ch3       bg_std_ch3      bg_min_ch3       bg_max_ch3   
-##  Min.   :120.0   Min.   :157.0   Min.   :214.6   Min.   : 9.701   Min.   :3.710   Min.   : 0.000   Min.   :18.00  
-##  1st Qu.:168.0   1st Qu.:216.0   1st Qu.:214.6   1st Qu.:12.560   1st Qu.:4.166   1st Qu.: 1.000   1st Qu.:23.00  
-##  Median :183.5   Median :225.5   Median :214.6   Median :13.212   Median :4.351   Median : 3.000   Median :25.00  
-##  Mean   :197.4   Mean   :237.9   Mean   :221.2   Mean   :13.797   Mean   :4.351   Mean   : 2.794   Mean   :25.31  
-##  3rd Qu.:209.0   3rd Qu.:255.8   3rd Qu.:228.0   3rd Qu.:14.575   3rd Qu.:4.524   3rd Qu.: 4.000   3rd Qu.:27.00  
-##  Max.   :313.0   Max.   :304.0   Max.   :228.0   Max.   :22.664   Max.   :5.069   Max.   :10.000   Max.   :34.00  
-##                                                                                                                   
-##              Error                           Comment   
-##  0-No Error     :277   BG XY change              :  1  
-##  1-No cell      : 52   BG change XY              :  1  
-##  2-Debris       :  7   No comment                :373  
-##  3-OutOfFocus   : 22   Small cell or debris?     :  2  
-##  4-MultipleCells: 20   Very small cell or debris?:  1  
-##                                                        
-## 
-```
-
-```r
 colnames(user2)
 ```
 
@@ -385,7 +338,7 @@ d[,c(-4)]
 ## 34 1772-067-039_E07 4-MultipleCells      0-No Error   0-No Error
 ```
 
-Report from User 1 used for final fluorescence values. Prepare additional columns for `Run` and `Well`. Rename errors in `Error` column to match the consensus error report. Add `Discard` column for wells with consensus errors and outliers (fluorescence > 200). 
+Report from User 1 used for final fluorescence values. Prepare additional columns for `Run` and `Well`. Rename errors in `Error` column to match the consensus error report. Add `Fluo_QC` column for wells with consensus errors and outliers (fluorescence > 200). 
 
 
 
@@ -394,10 +347,10 @@ user1$Well <- substr(user1$cell_id, 14, 16)
 user1$Run <- as.factor(paste(substr(subb, 1, 4), substr(subb, 6, 8),substr(subb, 10, 13), sep="-"))
 user1$Well <- as.factor(user1$Well)
 user1$Error[match(d$cell, user1$cell_id)] <- d$error
-user1$Discard <- FALSE
-user1[user1$Error != "0-No Error", "Discard"] <- TRUE  
-user1[user1$mean_ch3 > 200, "Discard"] <- TRUE
-user1[user1$mean_ch2 > 200, "Discard"] <- TRUE
+user1$Fluo_QC <- FALSE
+user1[user1$Error != "0-No Error", "Fluo_QC"] <- TRUE  
+user1[user1$mean_ch3 > 200, "Fluo_QC"] <- TRUE
+user1[user1$mean_ch2 > 200, "Fluo_QC"] <- TRUE
 ```
 
 ### <a name='overview'>Overview and Conclusions</a>
@@ -406,6 +359,7 @@ user1[user1$mean_ch2 > 200, "Discard"] <- TRUE
 * The mean, standard deviation and maxium values correlate well with each other in both the green and the red channels
 * A consensus was achieved with respect to the error type
 * Fluorescence table was saved as `Results_fluorescence.txt`
+* There are image files for 378 cells, and for 102 cells of the runs 1772-062-248, 1772-062-249 and 1772-064-103, some of the data was lost because of a case-sensitivity bug 
 
 
 ```r
@@ -445,7 +399,7 @@ summary(user1)
 ##  3rd Qu.:209.0   3rd Qu.:255.8   3rd Qu.:228.0   3rd Qu.:14.575   3rd Qu.:4.524   3rd Qu.: 4.000   3rd Qu.:27.00  
 ##  Max.   :313.0   Max.   :304.0   Max.   :228.0   Max.   :22.664   Max.   :5.069   Max.   :10.000   Max.   :34.00  
 ##                                                                                                                   
-##              Error                           Comment         Well               Run      Discard       
+##              Error                           Comment         Well               Run      Fluo_QC       
 ##  0-No Error     :293   BG XY change              :  1   C07    :  5   1772-062-248:62   Mode :logical  
 ##  1-No cell      : 50   BG change XY              :  1   C08    :  5   1772-062-249:62   FALSE:290      
 ##  2-Debris       :  8   No comment                :373   C11    :  5   1772-064-103:62   TRUE :88       
