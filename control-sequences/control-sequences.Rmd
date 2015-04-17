@@ -204,7 +204,7 @@ Libraries with more than 40,000 CPM of SPIKE_1 (the most concentrated one) are
 defective (for instance, the chamber may not have contained a cell).  This is
 also witnessed by a higher fraction of low-complexity reads.
 
-```{r control-sequences_low_complexity, dependson="control-sequences_create_table"}
+```{r control-sequences_low_complexity, dependson="control-sequences_create_table", dev=c("svg", "png")}
 spike1_threshold <- 40000
 qplot(data=spikes.norm, x=SPIKE_1, geom="histogram", color=Run) +
   facet_wrap(~Run) +

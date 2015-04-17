@@ -149,7 +149,13 @@ Construction of a table in R
 ```r
 library(reshape)
 library(ggplot2)
+```
 
+```
+## Loading required package: methods
+```
+
+```r
 spikes <- read.delim('spikes.txt', sep="\t", col.names=c('Run', 'read', 'cell', 'value', 'count'), head=FALSE)
 ggplot(
   data=spikes,
