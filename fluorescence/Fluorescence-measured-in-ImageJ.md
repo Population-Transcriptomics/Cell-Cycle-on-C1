@@ -347,10 +347,10 @@ user1$Well <- substr(user1$cell_id, 14, 16)
 user1$Run <- as.factor(paste(substr(subb, 1, 4), substr(subb, 6, 8),substr(subb, 10, 13), sep="-"))
 user1$Well <- as.factor(user1$Well)
 user1$Error[match(d$cell, user1$cell_id)] <- d$error
-user1$Fluo_QC <- FALSE
-user1[user1$Error != "0-No Error", "Fluo_QC"] <- TRUE  
-user1[user1$mean_ch3 > 200, "Fluo_QC"] <- TRUE
-user1[user1$mean_ch2 > 200, "Fluo_QC"] <- TRUE
+user1$fluo_QC <- FALSE
+user1[user1$Error != "0-No Error", "fluo_QC"] <- TRUE  
+user1[user1$mean_ch3 > 200, "fluo_QC"] <- TRUE
+user1[user1$mean_ch2 > 200, "fluo_QC"] <- TRUE
 ```
 
 ### <a name='overview'>Overview and Conclusions</a>
@@ -399,7 +399,7 @@ summary(user1)
 ##  3rd Qu.:209.0   3rd Qu.:255.8   3rd Qu.:228.0   3rd Qu.:14.575   3rd Qu.:4.524   3rd Qu.: 4.000   3rd Qu.:27.00  
 ##  Max.   :313.0   Max.   :304.0   Max.   :228.0   Max.   :22.664   Max.   :5.069   Max.   :10.000   Max.   :34.00  
 ##                                                                                                                   
-##              Error                           Comment         Well               Run      Fluo_QC       
+##              Error                           Comment         Well               Run      fluo_QC       
 ##  0-No Error     :293   BG XY change              :  1   C07    :  5   1772-062-248:62   Mode :logical  
 ##  1-No cell      : 50   BG change XY              :  1   C08    :  5   1772-062-249:62   FALSE:290      
 ##  2-Debris       :  8   No comment                :373   C11    :  5   1772-064-103:62   TRUE :88       

@@ -111,4 +111,4 @@ because of difference of length and base composition.
 plot(number.per.chamber, dilution, log='xy', type='b')
 ```
 
-![plot of chunk spike-dilution-plot](figure/spike-dilution-plot.png) 
+![plot of chunk spike-dilution-plot](figure/spike-dilution-plot-1.svg) 
