@@ -51,7 +51,7 @@ controls will be removed from the `qc` table.
 ```r
 fl <- read.csv("../fluorescence/Results_fluorescence.csv")
 fl$Error <- factor(fl$Error)
-fl <- fl[,c(1,5,12,17,24,28,30,31,32)]
+fl <- fl[,c(1,28,30,31,32)]
 
 correctedFl <- read.csv('../Intensity_correction/correctedIntensities.csv')
 correctedFl <- correctedFl[,1:3]
@@ -88,26 +88,13 @@ qc <- merge(qc, controls, by=c('cell_id', 'Run', 'Well'), all=TRUE)
 rownames(qc) <- qc$cell_id
 
 hiseq <- read.csv('../HiSeq/HiSeq.csv')
-hiseq <- hiseq[,c(1,8:17,19,20)]
+hiseq <- hiseq[,c(1,10, 15:17,19,20)]
 qc <- merge(qc, hiseq, by=c('cell_id', 'Run', 'Well', 'Row', 'Column'))
 
 # replace error type with numbers
-error <- sapply(strsplit(as.character(qc.full$Error),"-", fixed = TRUE),"[[", 1)
-```
-
-```
-## Error in strsplit(as.character(qc.full$Error), "-", fixed = TRUE): object 'qc.full' not found
-```
-
-```r
+error <- sapply(strsplit(as.character(qc$Error),"-", fixed = TRUE),"[[", 1)
 qc$Error <- error
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'error' not found
-```
-
-```r
+  
 qc.full <- qc
 ```
 
@@ -140,7 +127,9 @@ qplot(data = qc, Error, mean_ch2 + mean_ch3, geom = "boxplot"
 ) + facet_wrap(~Run, scales = "free") + ggtitle('Uncorrected fluorescence by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell')
 ```
 
-![plot of chunk qc_fluo_by_errortype](figure/qc_fluo_by_errortype-1.png) 
+```
+## Error in eval(expr, envir, enclos): object 'mean_ch2' not found
+```
 [Back to top](#top)
 
 #### <a name='no-cell_DNA-yield'>DNA concentration.</a>
@@ -234,54 +223,38 @@ summary(qc)
 ##                     1772-067-039:72   D09    :  5   F      :36   4      : 24   3rd Qu.:2.030  
 ##                                       D12    :  5   B      :35   5      : 24   Max.   :4.781  
 ##                                       (Other):259   (Other):55   (Other):137                  
-##     mean_ch2       bg_mean_ch2       mean_ch3       bg_mean_ch3                 Error    
-##  Min.   : 16.70   Min.   :14.94   Min.   : 12.07   Min.   : 9.701   0-No Error     :289  
-##  1st Qu.: 26.60   1st Qu.:17.35   1st Qu.: 26.34   1st Qu.:12.686   1-No cell      :  0  
-##  Median : 34.97   Median :22.12   Median : 48.99   Median :13.234   2-Debris       :  0  
-##  Mean   : 46.85   Mean   :21.30   Mean   : 53.07   Mean   :13.678   3-OutOfFocus   :  0  
-##  3rd Qu.: 65.94   3rd Qu.:23.10   3rd Qu.: 71.63   3rd Qu.:14.358   4-MultipleCells:  0  
-##  Max.   :135.99   Max.   :27.25   Max.   :177.03   Max.   :22.664                        
-##                                                                                          
-##   fluo_QC        ch2_corrected    ch3_corrected    low.complexity        SPIKE_1        
-##  Mode :logical   Min.   : 10.70   Min.   : 11.21   Min.   :   514.9   Min.   :   28.66  
-##  FALSE:289       1st Qu.: 14.81   1st Qu.: 23.41   1st Qu.:  2348.4   1st Qu.:  158.84  
-##  NA's :0         Median : 22.25   Median : 51.63   Median :  4059.9   Median : 1173.60  
-##                  Mean   : 38.83   Mean   : 53.76   Mean   :  5287.3   Mean   : 4044.16  
-##                  3rd Qu.: 57.97   3rd Qu.: 78.29   3rd Qu.:  5828.2   3rd Qu.: 6957.50  
-##                  Max.   :128.22   Max.   :145.92   Max.   :253685.6   Max.   :29382.25  
-##                                                    NA's   :4          NA's   :4         
-##     SPIKE_4             SPIKE_7          SPIKE_3           SPIKE_6            rRNA_18S      
-##  Min.   :   0.0000   Min.   :  0.00   Min.   : 0.0000   Min.   :0.000000   Min.   :   0.00  
-##  1st Qu.:   0.3359   1st Qu.:  0.00   1st Qu.: 0.0000   1st Qu.:0.000000   1st Qu.:  67.73  
-##  Median :  24.0277   Median :  0.00   Median : 0.0000   Median :0.000000   Median : 314.87  
-##  Mean   : 273.6173   Mean   : 25.09   Mean   : 0.8069   Mean   :0.008203   Mean   : 772.45  
-##  3rd Qu.: 495.8608   3rd Qu.: 34.26   3rd Qu.: 0.0000   3rd Qu.:0.000000   3rd Qu.:1209.21  
-##  Max.   :1665.7146   Max.   :273.32   Max.   :75.3734   Max.   :1.283028   Max.   :5107.16  
-##  NA's   :4           NA's   :4        NA's   :4         NA's   :4          NA's   :4        
-##     rRNA_28S         rRNA_5.8S          Nextera            HPV             HPV_as       Control   
-##  Min.   :   0.00   Min.   : 0.0000   Min.   : 50318   Min.   :   0.0   Min.   :   0.0   NC  :  0  
-##  1st Qu.:  18.14   1st Qu.: 0.0000   1st Qu.: 82841   1st Qu.: 893.9   1st Qu.: 328.5   PC  :  0  
-##  Median :  50.36   Median : 0.6358   Median : 95233   Median :1460.1   Median : 512.9   NA's:289  
-##  Mean   :  59.10   Mean   : 1.5019   Mean   :103690   Mean   :1641.3   Mean   : 578.5             
-##  3rd Qu.:  82.77   3rd Qu.: 1.8737   3rd Qu.:122796   3rd Qu.:2146.5   3rd Qu.: 760.2             
-##  Max.   :1119.20   Max.   :20.0407   Max.   :188657   Max.   :5904.7   Max.   :2166.2             
-##  NA's   :4         NA's   :4         NA's   :4        NA's   :4        NA's   :4                  
-##      Yield          Percent.PF      Reads         raw.clusters.per.lane Perfect.Index.Reads
-##  Min.   :   0.0   Min.   :100   Min.   :      0   Min.   :0.000         Min.   :100        
-##  1st Qu.: 395.0   1st Qu.:100   1st Qu.:2613214   1st Qu.:0.990         1st Qu.:100        
-##  Median : 495.0   Median :100   Median :3275860   Median :1.110         Median :100        
-##  Mean   : 483.8   Mean   :100   Mean   :3204306   Mean   :1.125         Mean   :100        
-##  3rd Qu.: 569.0   3rd Qu.:100   3rd Qu.:3766192   3rd Qu.:1.290         3rd Qu.:100        
-##  Max.   :1122.0   Max.   :100   Max.   :7430660   Max.   :2.860         Max.   :100        
-##                   NA's   :2                                             NA's   :2          
-##    Q30.bases     Mean.Quality.Score  HiSeq_QC      
-##  Min.   :43.38   Min.   :17.15      Mode :logical  
-##  1st Qu.:74.27   1st Qu.:30.23      FALSE:10       
-##  Median :77.84   Median :31.22      TRUE :279      
-##  Mean   :79.76   Mean   :31.67      NA's :0        
-##  3rd Qu.:86.01   3rd Qu.:33.34                     
-##  Max.   :92.20   Max.   :35.28                     
-##  NA's   :2       NA's   :2
+##     Error            fluo_QC        ch2_corrected    ch3_corrected    low.complexity    
+##  Length:289         Mode :logical   Min.   : 10.70   Min.   : 11.21   Min.   :   514.9  
+##  Class :character   FALSE:289       1st Qu.: 14.81   1st Qu.: 23.41   1st Qu.:  2348.4  
+##  Mode  :character   NA's :0         Median : 22.25   Median : 51.63   Median :  4059.9  
+##                                     Mean   : 38.83   Mean   : 53.76   Mean   :  5287.3  
+##                                     3rd Qu.: 57.97   3rd Qu.: 78.29   3rd Qu.:  5828.2  
+##                                     Max.   :128.22   Max.   :145.92   Max.   :253685.6  
+##                                                                       NA's   :4         
+##     SPIKE_1            SPIKE_4             SPIKE_7          SPIKE_3           SPIKE_6        
+##  Min.   :   28.66   Min.   :   0.0000   Min.   :  0.00   Min.   : 0.0000   Min.   :0.000000  
+##  1st Qu.:  158.84   1st Qu.:   0.3359   1st Qu.:  0.00   1st Qu.: 0.0000   1st Qu.:0.000000  
+##  Median : 1173.60   Median :  24.0277   Median :  0.00   Median : 0.0000   Median :0.000000  
+##  Mean   : 4044.16   Mean   : 273.6173   Mean   : 25.09   Mean   : 0.8069   Mean   :0.008203  
+##  3rd Qu.: 6957.50   3rd Qu.: 495.8608   3rd Qu.: 34.26   3rd Qu.: 0.0000   3rd Qu.:0.000000  
+##  Max.   :29382.25   Max.   :1665.7146   Max.   :273.32   Max.   :75.3734   Max.   :1.283028  
+##  NA's   :4          NA's   :4           NA's   :4        NA's   :4         NA's   :4         
+##     rRNA_18S          rRNA_28S         rRNA_5.8S          Nextera            HPV        
+##  Min.   :   0.00   Min.   :   0.00   Min.   : 0.0000   Min.   : 50318   Min.   :   0.0  
+##  1st Qu.:  67.73   1st Qu.:  18.14   1st Qu.: 0.0000   1st Qu.: 82841   1st Qu.: 893.9  
+##  Median : 314.87   Median :  50.36   Median : 0.6358   Median : 95233   Median :1460.1  
+##  Mean   : 772.45   Mean   :  59.10   Mean   : 1.5019   Mean   :103690   Mean   :1641.3  
+##  3rd Qu.:1209.21   3rd Qu.:  82.77   3rd Qu.: 1.8737   3rd Qu.:122796   3rd Qu.:2146.5  
+##  Max.   :5107.16   Max.   :1119.20   Max.   :20.0407   Max.   :188657   Max.   :5904.7  
+##  NA's   :4         NA's   :4         NA's   :4         NA's   :4        NA's   :4       
+##      HPV_as       Control        Reads          HiSeq_QC      
+##  Min.   :   0.0   NC  :  0   Min.   :      0   Mode :logical  
+##  1st Qu.: 328.5   PC  :  0   1st Qu.:2613214   FALSE:10       
+##  Median : 512.9   NA's:289   Median :3275860   TRUE :279      
+##  Mean   : 578.5              Mean   :3204306   NA's :0        
+##  3rd Qu.: 760.2              3rd Qu.:3766192                  
+##  Max.   :2166.2              Max.   :7430660                  
+##  NA's   :4
 ```
 
 ### Removing chambers which were affected by pipetting errors.
@@ -312,45 +285,29 @@ summary(subset(qc, low.complexity > 9000 & Run == '1772-067-039'))
 ##                     1772-067-039:4   A01    :0   A      :0   4      :0   3rd Qu.:0.2557  
 ##                                      A02    :0   D      :0   5      :0   Max.   :0.2760  
 ##                                      (Other):0   (Other):0   (Other):0                   
-##     mean_ch2      bg_mean_ch2       mean_ch3      bg_mean_ch3                Error  
-##  Min.   :22.65   Min.   :21.25   Min.   :13.23   Min.   :13.15   0-No Error     :4  
-##  1st Qu.:22.96   1st Qu.:21.61   1st Qu.:13.27   1st Qu.:13.28   1-No cell      :0  
-##  Median :23.32   Median :21.88   Median :13.50   Median :13.37   2-Debris       :0  
-##  Mean   :23.28   Mean   :21.82   Mean   :13.53   Mean   :13.35   3-OutOfFocus   :0  
-##  3rd Qu.:23.64   3rd Qu.:22.09   3rd Qu.:13.75   3rd Qu.:13.45   4-MultipleCells:0  
-##  Max.   :23.82   Max.   :22.26   Max.   :13.89   Max.   :13.52                      
-##                                                                                     
-##   fluo_QC        ch2_corrected   ch3_corrected   low.complexity     SPIKE_1        SPIKE_4       
-##  Mode :logical   Min.   :11.56   Min.   :12.83   Min.   : 9987   Min.   :1174   Min.   : 0.8575  
-##  FALSE:4         1st Qu.:12.40   1st Qu.:12.86   1st Qu.:10803   1st Qu.:1238   1st Qu.: 1.7202  
-##  NA's :0         Median :12.80   Median :13.21   Median :11279   Median :1565   Median :35.4370  
-##                  Mean   :12.59   Mean   :13.21   Mean   :11127   Mean   :1686   Mean   :39.5316  
-##                  3rd Qu.:13.00   3rd Qu.:13.56   3rd Qu.:11603   3rd Qu.:2012   3rd Qu.:73.2484  
-##                  Max.   :13.19   Max.   :13.57   Max.   :11964   Max.   :2439   Max.   :86.3948  
-##                                                                                                  
-##     SPIKE_7           SPIKE_3     SPIKE_6     rRNA_18S        rRNA_28S        rRNA_5.8S     
-##  Min.   : 0.0000   Min.   :0   Min.   :0   Min.   :245.7   Min.   : 65.87   Min.   :0.8575  
-##  1st Qu.: 0.6432   1st Qu.:0   1st Qu.:0   1st Qu.:391.8   1st Qu.: 79.71   1st Qu.:0.9124  
-##  Median : 6.0125   Median :0   Median :0   Median :444.1   Median : 84.97   Median :1.7484  
-##  Mean   : 8.5277   Mean   :0   Mean   :0   Mean   :401.4   Mean   : 84.46   Mean   :3.0964  
-##  3rd Qu.:13.8971   3rd Qu.:0   3rd Qu.:0   3rd Qu.:453.7   3rd Qu.: 89.72   3rd Qu.:3.9324  
-##  Max.   :22.0858   Max.   :0   Max.   :0   Max.   :471.6   Max.   :102.05   Max.   :8.0312  
-##                                                                                             
-##     Nextera            HPV             HPV_as       Control      Yield         Percent.PF 
-##  Min.   :122796   Min.   : 7.445   Min.   : 6.514   NC  :0   Min.   :150.0   Min.   :100  
-##  1st Qu.:127052   1st Qu.:25.202   1st Qu.:18.946   PC  :0   1st Qu.:159.0   1st Qu.:100  
-##  Median :128875   Median :44.288   Median :35.127   NA's:4   Median :169.0   Median :100  
-##  Mean   :128515   Mean   :44.107   Mean   :42.074            Mean   :166.2   Mean   :100  
-##  3rd Qu.:130339   3rd Qu.:63.193   3rd Qu.:58.255            3rd Qu.:176.2   3rd Qu.:100  
-##  Max.   :133514   Max.   :80.407   Max.   :91.527            Max.   :177.0   Max.   :100  
-##                                                                                           
-##      Reads         raw.clusters.per.lane Perfect.Index.Reads   Q30.bases     Mean.Quality.Score
-##  Min.   : 996116   Min.   :0.4200        Min.   :100         Min.   :68.27   Min.   :28.25     
-##  1st Qu.:1054938   1st Qu.:0.4425        1st Qu.:100         1st Qu.:68.83   1st Qu.:28.52     
-##  Median :1120336   Median :0.4700        Median :100         Median :69.31   Median :28.66     
-##  Mean   :1101460   Mean   :0.4625        Mean   :100         Mean   :69.14   Mean   :28.59     
-##  3rd Qu.:1166858   3rd Qu.:0.4900        3rd Qu.:100         3rd Qu.:69.61   3rd Qu.:28.73     
-##  Max.   :1169052   Max.   :0.4900        Max.   :100         Max.   :69.66   Max.   :28.77     
+##     Error            fluo_QC        ch2_corrected   ch3_corrected   low.complexity     SPIKE_1    
+##  Length:4           Mode :logical   Min.   :11.56   Min.   :12.83   Min.   : 9987   Min.   :1174  
+##  Class :character   FALSE:4         1st Qu.:12.40   1st Qu.:12.86   1st Qu.:10803   1st Qu.:1238  
+##  Mode  :character   NA's :0         Median :12.80   Median :13.21   Median :11279   Median :1565  
+##                                     Mean   :12.59   Mean   :13.21   Mean   :11127   Mean   :1686  
+##                                     3rd Qu.:13.00   3rd Qu.:13.56   3rd Qu.:11603   3rd Qu.:2012  
+##                                     Max.   :13.19   Max.   :13.57   Max.   :11964   Max.   :2439  
+##                                                                                                   
+##     SPIKE_4           SPIKE_7           SPIKE_3     SPIKE_6     rRNA_18S        rRNA_28S     
+##  Min.   : 0.8575   Min.   : 0.0000   Min.   :0   Min.   :0   Min.   :245.7   Min.   : 65.87  
+##  1st Qu.: 1.7202   1st Qu.: 0.6432   1st Qu.:0   1st Qu.:0   1st Qu.:391.8   1st Qu.: 79.71  
+##  Median :35.4370   Median : 6.0125   Median :0   Median :0   Median :444.1   Median : 84.97  
+##  Mean   :39.5316   Mean   : 8.5277   Mean   :0   Mean   :0   Mean   :401.4   Mean   : 84.46  
+##  3rd Qu.:73.2484   3rd Qu.:13.8971   3rd Qu.:0   3rd Qu.:0   3rd Qu.:453.7   3rd Qu.: 89.72  
+##  Max.   :86.3948   Max.   :22.0858   Max.   :0   Max.   :0   Max.   :471.6   Max.   :102.05  
+##                                                                                              
+##    rRNA_5.8S         Nextera            HPV             HPV_as       Control      Reads        
+##  Min.   :0.8575   Min.   :122796   Min.   : 7.445   Min.   : 6.514   NC  :0   Min.   : 996116  
+##  1st Qu.:0.9124   1st Qu.:127052   1st Qu.:25.202   1st Qu.:18.946   PC  :0   1st Qu.:1054938  
+##  Median :1.7484   Median :128875   Median :44.288   Median :35.127   NA's:4   Median :1120336  
+##  Mean   :3.0964   Mean   :128515   Mean   :44.107   Mean   :42.074            Mean   :1101460  
+##  3rd Qu.:3.9324   3rd Qu.:130339   3rd Qu.:63.193   3rd Qu.:58.255            3rd Qu.:1166858  
+##  Max.   :8.0312   Max.   :133514   Max.   :80.407   Max.   :91.527            Max.   :1169052  
 ##                                                                                                
 ##  HiSeq_QC      
 ##  Mode:logical  
@@ -396,7 +353,7 @@ ggplot(
   geom_point() + facet_wrap('Run', scale='free') + stat_quantile(formula='y ~ x')
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
+![plot of chunk concentration_spike1](figure/concentration_spike1-1.png) 
 
 ```r
 #ggplot(
@@ -415,11 +372,10 @@ ggplot(
   scale_y_continuous(name="rank/length SPIKE_1")
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-2.png) 
+![plot of chunk concentration_spike1](figure/concentration_spike1-2.png) 
 
 ### Relation between fluorescence intensity and DNA concentration.
 
-Not much for the moment…
 
 
 ```r
@@ -431,13 +387,13 @@ with(qc,
       Concentration, low.complexity, SPIKE_1, HPV), col=Run))
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+![plot of chunk pairwiseplot](figure/pairwiseplot-1.png) 
 
 ```r
 ggplot(data=qc, aes(Concentration, log(ch3_corrected))) + geom_point() + facet_wrap('Run', scale='free')
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-2.png) 
+![plot of chunk concentration_logCh3_corrected](figure/concentration_logCh3_corrected-1.png) 
 
 ### Add a global QC flag and export the full table
 

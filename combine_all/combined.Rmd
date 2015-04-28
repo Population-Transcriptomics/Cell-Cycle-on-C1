@@ -52,7 +52,7 @@ controls will be removed from the `qc` table.
 ```{r qc-merging}
 fl <- read.csv("../fluorescence/Results_fluorescence.csv")
 fl$Error <- factor(fl$Error)
-fl <- fl[,c(1,5,12,17,24,28,30,31,32)]
+fl <- fl[,c(1,28,30,31,32)]
 
 correctedFl <- read.csv('../Intensity_correction/correctedIntensities.csv')
 correctedFl <- correctedFl[,1:3]
@@ -75,11 +75,11 @@ qc <- merge(qc, controls, by=c('cell_id', 'Run', 'Well'), all=TRUE)
 rownames(qc) <- qc$cell_id
 
 hiseq <- read.csv('../HiSeq/HiSeq.csv')
-hiseq <- hiseq[,c(1,8:17,19,20)]
+hiseq <- hiseq[,c(1,10, 15:17,19,20)]
 qc <- merge(qc, hiseq, by=c('cell_id', 'Run', 'Well', 'Row', 'Column'))
 
 # replace error type with numbers
-error <- sapply(strsplit(as.character(qc.full$Error),"-", fixed = TRUE),"[[", 1)
+error <- sapply(strsplit(as.character(qc$Error),"-", fixed = TRUE),"[[", 1)
 qc$Error <- error
   
 qc.full <- qc
@@ -199,7 +199,7 @@ molecules, _S + C_.  Therefore, the spike ratio, aproximated by the `SPIKE_1`
 value, has an inverse relationship with the DNA yield, measured by the
 `Concentration` value.
 
-```{r}
+```{r concentration_spike1, dev=c('svg', 'png')}
 ggplot(
   data=qc,
   aes(Concentration, SPIKE_1)) + 
@@ -223,16 +223,16 @@ ggplot(
 
 ### Relation between fluorescence intensity and DNA concentration.
 
-Not much for the moment…
 
-```{r, dev=c('svg', 'png')}
+```{r pairwiseplot, dev=c('svg', 'png')}
 with(qc,
   plot(
     data.frame(
       logCh2Corrected = log(ch2_corrected + 1),
       logCh3Corrected = log(ch3_corrected + 1),
       Concentration, low.complexity, SPIKE_1, HPV), col=Run))
-
+```
+``` {r concentration_logCh3_corrected, dev=c('svg', 'png')}
 ggplot(data=qc, aes(Concentration, log(ch3_corrected))) + geom_point() + facet_wrap('Run', scale='free')
 ```
 
