@@ -1,0 +1,258 @@
+```{r echo=FALSE}
+options(width=100)
+knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_knit$set(verbose = TRUE)
+```
+
+<a name='top'>Control sequence counts in the FASTQ reads</a>
+============================================================
+
+Summary
+-------
+
+Using the TagDust 2 program (<http://sourceforge.net/projects/tagdust/>), the
+number of reads matching reference control sequences for the spikes, the rRNAs,
+and the Nextera linkers are counted, normalised, and saved in a table.  This
+table contains the following columns:
+
+ - `cell_id`, identifying each cell uniquely. 
+ - `low.complexity`, as defined by TagDust's filter.
+ - `SPIKE_1`, `SPIKE_4`, `SPIKE_7`, `SPIKE_3`, `SPIKE_6`: the percentage of reads
+    matching these spikes (Ambion ArrayControl, cat. num.
+    [AM1780M](http://www.lifetechnologies.com/order/catalog/product/AM1780M))
+ - `rRNA_5.8S`, `rRNA_18S`, `rRNA_28S`: expression levels of these rRNAs.
+ - `Nextera`, for the artefacts derived from linker oligonucleotides.
+ - `HPV` and `HPV_as`, for the transcripts originating from the Human Papilloma
+    Virus 18. 
+
+The unit for expression levels is counts per million (CPM).  Given that there
+is a 3′ bias in the RNA-seq protocol used here, it is not advisable to
+normalise by sequence length in addition.
+
+In the last three runs, the detection levels of spikes and rRNA are lower than
+in the first two runs (see the plot _[Overview of the reference sequences
+detected with TagDust2](#low-everything)_).
+
+The quantity of primer artefacts (called _Nextera_ below), is constant between
+runs, at roughly 10 % of the total number of reads.  Note that TagDust only
+inspects the first 32 bases of the reads, but that should be enough, and also
+avoids calling _artefact_ a read that has a short insert and finishes in the
+linker region.
+
+Random inspection of file (matching the pattern `links_to_fastq/*A10*R1*
+links_to_fastq/*B04*R1* links_to_fastq/*F09*R1*`) for presence of reads
+aligning to the _Mycoplasma hominis_ genome (NC_013511) did not suggest
+contamination of the cells.
+
+Datasets
+--------
+
+### Files
+
+ - Ambion spikes: `ArrayControl.nopolyA.fa`.  _Important:_ poly-A tails
+   were removed from the reference file containing the spike sequences, to avoid
+   artificial detection of A-rich reads as spikes.  The relative concentrations of
+   the spikes are:
+   - EC13 RNA SPIKE6 1250 bp: 1 ×
+   - EC3 RNA SPIKE3 1000 bp: 10 ×
+   - EC18 RNA SPIKE7 1474 bp: 100 ×
+   - EC15 RNA SPIKE4 1000 bp: 1,000 ×
+   - EC2 RNA SPIKE1 750 bp: 10,000 ×
+
+ - `rRNA.fa`: sequence from the 5.8S, 18S and 28S rRNA according to GenBank U13369.1.
+
+ - `Nextera.fa`: sequence of the Nextera primers according to <http://support.illumina.com/downloads/illumina-customer-sequence-letter.html>.
+
+ - `hpv18.fa` and `hpv18-as.fa`, sense and antisense HPV18 sequence from GenBank
+    record AY262282.  HeLa cells have a fragment of HPV inserted in their genome.
+
+```{r control-sequences_spikes.fa, engine="sh"}
+cat Nextera.fa rRNA.fa ArrayControl.nopolyA.fa hpv18.fa hpv18-as.fa > spikes.fa
+```
+
+Extraction
+----------
+
+Detection of the spikes using TagDust.
+
+To run this section, [install
+TagDust](http://sourceforge.net/projects/tagdust/files/) version 2.06 in the
+current directory, unpack and compile it.  (This script can not use higher
+version of TagDust because they do not allow for the redirection of the output
+sequences to `/dev/null/`.), then, edit the RMarkdown code and remove the
+`eval=FALSE` statement. The TagDust counting with 8 CPU cores takes approximately 1 day.
+
+```{r control-sequences_run_tagdust, engine="sh", eval=FALSE}
+TAGDUST=./tagdust-2.06/tagdust
+$TAGDUST | grep Copyright 
+SPIKES=spikes.fa 
+for FILE in ../DDBJ/*fastq.bz2
+do
+  $TAGDUST -t 8 -l tagdust -o /dev/null -ref $SPIKES $FILE
+done
+```
+
+Loops to create a file called `spikes.txt`, where each line gives the number of
+reads matching one given spike in one given file.
+
+```{r control-sequences_extract_data, warning=FALSE, engine="sh", dependson="control-sequences_run_tagdust"}
+for LIBRARY in 1772-062-248 1772-062-249 1772-064-103 1772-067-038 1772-067-039
+do
+  for ROW in A B C D E F G H
+  do
+    for COLUMN in 01 02 03 04 05 06 07 08 09 10 11 12
+    do
+      for READ in 1 2
+      do
+        grep -e rRNA -e SPIKE -e input -e complex -e Nextera -e HPV tagdust/${LIBRARY}_${ROW}${COLUMN}.${READ}* |
+          perl -pe "s/^/$LIBRARY\tR$READ\t$ROW$COLUMN\t/"
+      done
+    done
+  done
+done > spikes.txt
+
+head spikes.txt
+```
+
+Construction of a table in R
+----------------------------
+
+```{r control-sequences_load_data, dependson="control-sequences_extract_data", dev=c("svg", "png")}
+library(reshape)
+library(ggplot2)
+
+spikes <- read.delim('spikes.txt', sep="\t", col.names=c('Run', 'read', 'cell', 'value', 'count'), head=FALSE)
+ggplot(
+  data=spikes,
+  aes(x=count, y=value, colour=read)) + geom_boxplot() + coord_flip() + scale_y_log10('Raw count')
+summary(spikes)
+```
+
+Spikes 1, 4 and 7 are detected in every file of the runs `1772-062-248` and
+`1772-062-249`.  This is not true however for the next runs (`1772-064-103`,
+`1772-067-038`, `1772-067-039`), where the amount of spikes detected was much
+lower (see below).  There is not much difference between the counts from Reads
+1 and 2, except for the Nextera primers where reverse primers are found in Read
+1 and forward primers in Read 2
+
+In the next steps, the data is transformed to a matrix of counts, which are
+then converted as a percentage of the total number of reads.  Counts from Read
+1 and Read 2 are averaged, and counts for the Nextera primers are summed.
+
+```{r control-sequences_create_table, dependson="control-sequences_load_data"}
+spikes.m <- t(cast(spikes, count ~ read + Run + cell))
+spikes.m[is.na(spikes.m)] <- 0
+spikes.m <- spikes.m[,
+  c( "total input reads"
+   , "low complexity"
+   , "EC2_RNA_SPIKE_1_(750_bp)"
+   , "EC15_RNA_SPIKE_4_(1000_bp)"
+   , "EC18_RNA_SPIKE_7_(1474bp)"
+   , "EC3_RNA_SPIKE_3_(1000_bp)"
+   , "EC13_RNA_SPIKE_6_(1250_bp)"
+   , "rRNA_18S"
+   , "rRNA_28S"
+   , "rRNA_5.8S"
+   , "HPV18"
+   , "HPV18_as"
+   ,  grep("Nextera_", colnames(spikes.m), value=TRUE)
+   )
+]
+
+colnames(spikes.m) <- 
+  c( "total"
+   , "low.complexity"
+   , "SPIKE_1"
+   , "SPIKE_4"
+   , "SPIKE_7"
+   , "SPIKE_3"
+   , "SPIKE_6"
+   , "rRNA_18S"
+   , "rRNA_28S"
+   , "rRNA_5.8S"
+   , "HPV"
+   , "HPV_as"
+   , grep("Nextera_", colnames(spikes.m), value=TRUE)
+   )
+
+Read <- factor(sub('R._', '', rownames(spikes.m)))
+spikes.m <- rowsum(spikes.m, Read) / 2
+
+spikes.norm <- data.frame(spikes.m[, -1] / spikes.m[,"total"] * 1000000)
+spikes.norm[is.na(spikes.norm)] <- 0
+
+spikes.norm$Nextera <- rowSums(spikes.norm[,grep("Nextera_", colnames(spikes.norm))])
+spikes.norm <- spikes.norm[, c("low.complexity", "SPIKE_1", "SPIKE_4", "SPIKE_7", "SPIKE_3", "SPIKE_6", "rRNA_18S", "rRNA_28S", "rRNA_5.8S", "Nextera", "HPV", "HPV_as")]
+
+spikes.norm <- cbind ( cell_id=rownames(spikes.norm)
+                     , spikes.norm
+                     , stringsAsFactors = FALSE)
+
+spikes.norm <- cbind ( read.table( text      = spikes.norm$cell_id
+                                 , sep       = '_'
+                                 , col.names = c("Run", "Well"))
+                     , spikes.norm)
+
+write.csv(file='spikes.norm.csv', spikes.norm, row.names=FALSE)
+
+summary(spikes.norm)
+```
+
+[Back to top](#top)
+
+Libraries with more than 40,000 CPM of SPIKE_1 (the most concentrated one) are
+defective (for instance, the chamber may not have contained a cell).  This is
+also witnessed by a higher fraction of low-complexity reads.
+
+```{r control-sequences_low_complexity, dependson="control-sequences_create_table", dev=c("svg", "png")}
+spike1_threshold <- 40000
+qplot(data=spikes.norm, x=SPIKE_1, geom="histogram", color=Run) +
+  facet_wrap(~Run) +
+  scale_x_log10('CPM') +
+  geom_vline(xintercept=spike1_threshold)
+t.test(data=spikes.norm, low.complexity ~ factor(SPIKE_1 > spike1_threshold))
+
+spikes.norm.ok <- subset(spikes.norm, SPIKE_1 < spike1_threshold)
+```
+
+[Back to top](#top)
+
+In the libraries with the expected fraction of spikes, the relation between
+SPIKE_1 and SPIKE_4 is linear, except for the last two ones where
+SPIKE_4's detection level are low and noisy.  Other spikes where hard to detect
+on purpose, to calculate the efficiency of the conversion from mRNA to sequence
+read.
+
+```{r control-sequences_proportions, dependson="control-sequences_create_table", dev=c("svg", "png")}
+ggplot(
+  spikes.norm.ok,
+  aes(SPIKE_1, SPIKE_4)
+) + geom_point() + facet_wrap('Run', scale='free') + scale_x_log10() + scale_y_log10()
+```
+
+[Back to top](#top)
+
+#### <a name='low-everything'>Overview of all detected sequences</a>
+
+
+```{r control-sequences_overview, dependson="control-sequences_create_table", dev=c("svg", "png")}
+spikes.norm.ok.long <- melt(spikes.norm.ok)
+
+ggplot(
+  data=spikes.norm.ok.long,
+  aes(x=variable, y=value + 1e-05 )
+) +
+  geom_boxplot() +
+  coord_flip() +
+  scale_y_log10("CPM") +
+  facet_wrap('Run') +
+  xlab('') +
+  ggtitle('Overview of the reference sequences detected with TagDust2')
+```
+
+A small quantity of `1e-05` was added to avoid removing the zero values by the
+logarithmic scaling, which would have made the boxplots of SPIKE_3 and SPIKE_6
+very misleading.  Note also that these two spikes were added in the runs
+1772-062-248 and 1772-062-249.
+
+[Back to top](#top)

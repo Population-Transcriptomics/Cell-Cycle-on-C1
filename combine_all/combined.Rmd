@@ -1,0 +1,250 @@
+```{r echo=FALSE}
+options(width=100)
+knitr::opts_knit$set(verbose = TRUE)
+```
+
+<a name='top'>Combined analysis of Fucci fluorescence and cDNA concentration</a>
+===============================================================================
+
+Summary
+-------
+
+After [visual inspection](#no-cell_fluorescence), chambers with no cells or
+with defect in the imaging were flagged for removal. The [DNA
+yield](#no-cell_DNA-yield) for the same chambers was also very low.
+Conversely, in the absence of cells, the proportion of
+[spikes](#no-cell_spikes) was highest. This confirms the accuracy of the
+visual inspection and confirms that the conversion between C1 chip coordinates
+and 96-well plate coordinates was done correctly.
+
+In the output file `combined.csv`, a column called `Discard` indicates if the
+cell fails any of the quality controls.
+
+Datasets
+--------
+
+ - The non corrected fluorescence values are produced as explained in
+   [Fluorescence-measured-in-ImageJ.html](fluorescence/Fluorescence-measured-in-ImageJ.html).
+ - The background and batch effect correction of the fluorescence values is explained 
+   in [BackgroundCorrection.html](Intensity_correction/BackgroundCorrection.html)
+ - The cDNA concentration values are produced as explained in
+   [cDNA_concentration.html](cDNA_concentration/concentration_QC.html).
+ - Normalised spike counts: `control-sequences/spikes.norm.csv`, see [control-sequences.html](control-sequences/control-sequences.html).
+ - Location of the positive and negative controls: `controls.csv`, as indicated
+   by the operators T. K., (email on Mon, 24 Mar 2014 20:06:36 +0900) and
+   S. K. (e-mail on Tue, 25 Mar 2014 09:02:50 +0900).
+
+Quality control
+---------------
+
+```{r message=FALSE}
+library(gdata)   # for drop.levels()
+library(ggplot2) # for the plots
+library(scales)  # for trans_new()
+```
+
+### Load and merge the fluorescence and concentration values
+
+The `qc` table is assembled by merging multiple data sources.  It is then saved
+as `qc.full`.  In the steps that follow, entries that do not pass quality
+controls will be removed from the `qc` table.
+
+```{r qc-merging}
+fl <- read.csv("../fluorescence/Results_fluorescence.csv")
+fl$Error <- factor(fl$Error)
+fl <- fl[,c(1,28,30,31,32)]
+
+correctedFl <- read.csv('../Intensity_correction/correctedIntensities.csv')
+correctedFl <- correctedFl[,1:3]
+
+qc <- merge(fl, correctedFl[,1:3], all=TRUE)
+
+# pg as short name for picogreen
+pg <- read.csv('../cDNA_concentration/cDNA_concentration.csv')
+pg$Column <- factor(pg$Column)
+pg$cell_id <- paste(pg$Run, pg$Well, sep='_')
+qc <- merge(pg, qc, by=c('cell_id', 'Run', 'Well'), all=TRUE)
+
+spikes <- read.csv('../control-sequences/spikes.norm.csv')
+qc <- merge(qc, spikes, all=TRUE)
+
+controls <- read.csv('../combine_all/controls.csv')
+summary(controls)
+controls$cell_id <- paste(controls$Run, controls$Well, sep='_')
+qc <- merge(qc, controls, by=c('cell_id', 'Run', 'Well'), all=TRUE)
+rownames(qc) <- qc$cell_id
+
+hiseq <- read.csv('../HiSeq/HiSeq.csv')
+hiseq <- hiseq[,c(1,10, 15:17,19,20)]
+qc <- merge(qc, hiseq, by=c('cell_id', 'Run', 'Well', 'Row', 'Column'))
+
+# replace error type with numbers
+error <- sapply(strsplit(as.character(qc$Error),"-", fixed = TRUE),"[[", 1)
+qc$Error <- error
+  
+qc.full <- qc
+
+```
+
+### Remove the samples that were replaced by positive or negative controls.
+
+```{r}
+qc <- subset(qc, is.na(qc$Control))
+```
+
+### Visual curation
+
+Visual curation of the fluorescence pictures (`Error` field, see
+[Fluorescence-measured-in-ImageJ.html](fluorescence/Fluorescence-measured-in-ImageJ.html)) eliminated the chambers
+where it was not sure wether a healthy single cell was captured, in good concordance with the DNA yields.
+In the absence of a cell the libraries are mostly made of spikes.
+
+
+#### <a name='no-cell_fluorescence'>Fluorescence.</a>
+### Remove the cells for which there are no image files.
+
+```{r}
+qc <- subset(qc, !is.na(qc$Error))
+```
+
+```{r qc_fluo_by_errortype, dev=c('svg', 'png')}
+qplot(data = qc, Error, mean_ch2 + mean_ch3, geom = "boxplot"
+) + facet_wrap(~Run, scales = "free") + ggtitle('Uncorrected fluorescence by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell')
+```
+[Back to top](#top)
+
+#### <a name='no-cell_DNA-yield'>DNA concentration.</a>
+
+```{r qc_concentration_by_errortype, dev=c('svg', 'png')}
+qplot(data = qc, Error, Concentration, geom = "boxplot"
+) + facet_wrap(~Run, scales = "free") + ggtitle('DNA concentration by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('DNA yield (ng/nL)')
+```
+[Back to top](#top)
+
+#### <a name='no-cell_rRNA'>18S rRNA.</a>
+
+```{r qc_rRNA_by_errortype, dev=c('svg', 'png')}
+qplot(data = qc, Error, rRNA_18S, geom = "boxplot"
+) + facet_wrap(~Run, scales = "free") + ggtitle('18S rRNA by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('rRNA 18S (CPM)')
+```
+
+[Back to top](#top)
+
+#### <a name='no-cell_spikes'>Spike 1.</a>
+
+```{r qc_spike1_by_errortype, dev=c('svg', 'png')}
+qplot(data = qc, Error, SPIKE_1, geom = "boxplot") + facet_wrap(~Run, scales = "free") + ggtitle('Spike 1 by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('Spike 1 (CPM)')
+```
+
+#### <a name='no-cell_Nextera'>Nextera primers.</a>
+
+```{r qc_nextera_by_errortype, dev=c('svg', 'png')}
+qplot(data = qc, Error, Nextera, geom = "boxplot") + facet_wrap(~Run, scales = "free") + ggtitle('Nextera primers by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('Nextera primers')
+```
+
+### Median DNA yield
+
+The DNA yield of chambers with no cells varies from run to run.  Note that all
+chambers contain spikes, so the yield will not be null.
+
+```{r}
+yield <- with(subset(qc, as.character(Error) < 2), tapply(Concentration, list(Run, drop.levels(Error)), median))
+colnames(yield) <- c('one cell', 'no cell')
+yield
+```
+
+### Removing chambers which failed fluorescence QC
+
+```{r}
+qc <- subset(qc, fluo_QC != TRUE,)
+summary(qc)
+```
+
+### Removing chambers which were affected by pipetting errors.
+
+The libraries with pipetting errors failed the [HiSeq QC](HiSeq/HiSeq.html).
+
+```{r}
+qc <- subset(qc, HiSeq_QC == TRUE)
+```
+
+### Removing low-complexity libraries.
+
+Some libraries in run 1772-067-039 are outliers with low yield, no fluorescence and higher proportion
+of low-complexity reads, therefore we remove them.
+
+```{r}
+summary(subset(qc, low.complexity > 9000 & Run == '1772-067-039'))
+qc <- subset(qc, ! (low.complexity > 9000 & Run == '1772-067-039'))
+```
+
+Two libraries 1772-067-038 have quantities of spikes that are way higher than
+the average, suggesting bad quality.  It is not sure whether they should be
+removed from the final analysis, but removing them now helps the readability of
+the plots below.
+
+```{r}
+#  Disabled: removing them causes one of the plots to crash due to problems on guessing the scale.
+#subset(qc, Run == '1772-067-038' & SPIKE_1 > 1)
+#summary(subset(qc, Run == '1772-067-038' & SPIKE_1 < 1, SPIKE_1))
+#qc <- subset(qc, ! (Run == '1772-067-038' & SPIKE_1 > 1))
+```
+
+### There is an inverse correlation between the quantity of spike reads and the DNA yield.
+
+If the spikes provide _S_ molcules and the cells provide _C_ molecules, then
+the spike ration should be _S / (S − C)_, which also equals to _1 − C / (S +
+C)_.  In addition, the DNA yield should be proportional to the total number of
+molecules, _S + C_.  Therefore, the spike ratio, aproximated by the `SPIKE_1`
+value, has an inverse relationship with the DNA yield, measured by the
+`Concentration` value.
+
+```{r concentration_spike1, dev=c('svg', 'png')}
+ggplot(
+  data=qc,
+  aes(Concentration, SPIKE_1)) + 
+  geom_point() + facet_wrap('Run', scale='free') + stat_quantile(formula='y ~ x')
+
+#ggplot(
+#  data=qc,
+#  aes(Concentration, SPIKE_1)) + 
+#  geom_point() + facet_wrap('Run', scale='free') + stat_quantile(formula='y ~ x') + 
+#  scale_x_continuous(trans = trans_new('inverse', transform = function(x) 1 / x, inverse = function(x) 1 / x), name='concentration (inverse scale)')
+
+ggplot(
+  data=qc,
+  aes(
+    ave(qc$Concentration, qc$Run, FUN = function(X) {rank(X) / length(X)}),
+    ave(qc$SPIKE_1, qc$Run, FUN = function(X) {rank(X) / length(X)}))) + 
+  geom_point()  + facet_wrap('Run') + stat_quantile(formula='y ~ x') +
+  scale_x_continuous(name="rank/length concentration") +
+  scale_y_continuous(name="rank/length SPIKE_1")
+```
+
+### Relation between fluorescence intensity and DNA concentration.
+
+
+```{r pairwiseplot, dev=c('svg', 'png')}
+with(qc,
+  plot(
+    data.frame(
+      logCh2Corrected = log(ch2_corrected + 1),
+      logCh3Corrected = log(ch3_corrected + 1),
+      Concentration, low.complexity, SPIKE_1, HPV), col=Run))
+```
+``` {r concentration_logCh3_corrected, dev=c('svg', 'png')}
+ggplot(data=qc, aes(Concentration, log(ch3_corrected))) + geom_point() + facet_wrap('Run', scale='free')
+```
+
+### Add a global QC flag and export the full table
+
+```{r}
+qc.full$Discard <- FALSE
+qc.full[ !is.na(qc.full$Control), 'Discard'] <- TRUE
+qc.full[ is.na(qc.full$fluo_QC), 'Discard'] <- TRUE
+qc.full[ which(qc.full$fluo_QC == TRUE), 'Discard'] <- TRUE
+qc.full[ !qc.full$HiSeq_QC, 'Discard'] <- TRUE
+
+write.csv(qc.full, file='../combine_all/combined.csv', row.names=FALSE)
+```
+
