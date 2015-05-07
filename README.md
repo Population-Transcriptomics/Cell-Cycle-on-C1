@@ -16,6 +16,9 @@ cover in particular:
 
  - Controls on [sequencing yield](HiSeq/HiSeq.md).
 
+ - Quantification of [control sequences](control-sequences/control-sequences.md)
+   such as RNA spikes and ribosomal RNA.
+
  - [Aggregation and consistency checks](combine_all/combined.md) of these data.
 
 As supporting data for these scripts, we provide a RNA-seq analysis of _Fucci_
