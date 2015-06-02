@@ -1,4 +1,5 @@
 macro "SetArea_Measure"{
+run("Bio-Formats Macro Extensions"); 
 directory=getDirectory("Select a Directory");
 
 //Get the list of all the files in that directory
@@ -11,7 +12,7 @@ for (i = 0; i < lengthOf(files); i++) {
 		if(end == true){
 			//Open bright field image file
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + files[i]);
+			Ext.openImagePlus(directory + "/" + files[i]);
 			
 			//zoom in
 			makeRectangle(125, 125, 250, 250);
@@ -31,7 +32,7 @@ for (i = 0; i < lengthOf(files); i++) {
 			
 			//Open the file in green channel for analysis
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + substring(files[i], 0, 16) + "_Green.C01");
+			Ext.openImagePlus(directory + "/" + substring(files[i], 0, 16) + "_Green.C01");
 			
 			//Measure the fluorescence at the location of the cell
 			makeRectangle(125, 125, 250, 250);
@@ -63,7 +64,7 @@ for (i = 0; i < lengthOf(files); i++) {
 			
 			//Repeat the measurement of signal and background in the Red channel image
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + substring(files[i], 0, 16) + "_Red.C01");
+			Ext.openImagePlus(directory + "/" + substring(files[i], 0, 16) + "_Red.C01");
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");
 			makeOval(x, y, 13, 13);
