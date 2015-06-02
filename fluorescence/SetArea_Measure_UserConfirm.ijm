@@ -87,8 +87,10 @@ for (i = 0; i < lengthOf(files); i++) {
 			setResult("bg_std_ch3", row, std);
 			setResult("bg_min_ch3", row, min);
 			setResult("bg_max_ch3", row, max); 
-			
-			//Ask the user for comment and error report
+			close(); 
+
+			//Ask the user for comment and error report, showing brightfield again
+			Ext.openImagePlus(directory + "/" + files[i]);
 			title = "No comment";
 			width = 512; height = 512;
 			Dialog.create("Error report");
