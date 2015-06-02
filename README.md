@@ -44,5 +44,5 @@ In Debian, some of these libraries are provided by the packages `r-cran-gdata`,
 
 ### Other software:
 
-`lftp`, `Fiji ImageJ`
+`lftp`, [`Fiji ImageJ`](http://fiji.sc/Fiji)
 
