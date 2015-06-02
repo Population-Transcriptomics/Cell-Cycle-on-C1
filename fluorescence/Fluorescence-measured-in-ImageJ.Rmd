@@ -31,6 +31,10 @@ The following procedures are done:
 * Open dialogue box and ask the user for an error report: comment and error type
 * Record the file name, coordinates, size of area, mean intnsity, standard deviation, minimum and maximum intensities and an Error report
 * Repeat the previous steps for every set of three images in the folder
+* Tip: if you change the shape of the circular area by mistake, you can
+  re-create a new one of diameter 13 by opening the _System Clipboard_
+  (File → New → …) and running the command `makeOval(250, 250, 13, 13)`
+  from there.
 
 The Fiji ImageJ macro was run independently by Elo Madissoon, User 1 (file [`r resultsUser1`](`r resultsUser1`))
 and Michael Böttcher, User 2 (file [`r resultsUser2`](`r resultsUser2`)). 
