@@ -15,7 +15,7 @@ This repository contains the contributions of the following people
    for measuring [fluorescence](fluorescence) values and prepared analysis on
    the data.
 
- * Makis Motakis <emotakis@gsc.riken.jp>: [normalised](Intensity_correction)
+ * Efthymios Motakis <emotakis@gsc.riken.jp>: [normalised](Intensity_correction)
    the fluorescence data.
 
  * Charles Plessy <plessy@riken.jp> drafted the analysis on our Intranet, in
