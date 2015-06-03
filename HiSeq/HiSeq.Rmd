@@ -22,7 +22,7 @@ Summary
 Datasets
 --------
 
-The `Demultiplex_Stats.htm` files from the _Basecall Stats_ directory of the
+The `Demultiplex_Stats.html` files from the _Basecall Stats_ directory of the
 HiSeq runs were copied and renamed with their run ID, opened in a web browser,
 and the table inside was pasted in LibreOffice, edited and saved in _xslx_
 format before loading into `R`.
