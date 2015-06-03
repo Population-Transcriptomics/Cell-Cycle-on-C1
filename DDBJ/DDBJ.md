@@ -8,9 +8,9 @@ Raw sequences in FASTQ format were deposited in the DNA DataBank of Japan
 HiSeq library.  This page explains how to associate sequencing data to a given
 well from a given C1 run, and provides scripts to download the data and rename
 the files according to cell identifiers instead of DDBJ accession numbers.  The
-first part, on metadata handling is done in R and is rebuildable.  The second
+first part, on metadata handling is done in `R` and is rebuildable.  The second
 part, which involves a long download, has been tested but is not automatically
-re-executed when runnign knitr.
+re-executed when runnign `knitr`.
 
 
 Accession numbers and metadata
@@ -165,7 +165,7 @@ mget -c */*.bz2
 ```
 
 The next part utilises the file `DDBJLink.csv` to rename downloaded fastq.bz2 files with the unique `cell_id`.
-Adjust the below script to the directory in which the `DDBJLink.csv` is located. Furthermore, your working directory should be 'yourdirectoryname' where all the dowloaded fastq.bz2 files are saved. 
+Adjust the below script to the directory in which the `DDBJLink.csv` is located. Furthermore, your working directory should be `yourdirectoryname` where all the dowloaded fastq.bz2 files are saved. 
 
 
 ```sh
