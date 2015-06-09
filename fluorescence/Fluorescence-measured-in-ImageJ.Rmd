@@ -17,7 +17,9 @@ Images of *Fucci* cells loaded in the C1 capture array, were taken before cell l
 Three modes have been used for imaging: bright field (BF), Green and Red. 
 [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the
 Cellomics specific C01 format were used for measuring fluorescence intensities and reporting errors in 
-[Fiji ImageJ](http://fiji.sc/Fiji). All platforms version by using the macro [`r scriptName`](`r scriptName`).
+[Fiji ImageJ](http://fiji.sc/Fiji) (plain ImageJ users need to install the
+[Bio-Formats](https://www.openmicroscopy.org/site/support/bio-formats) plugin).
+All platforms version by using the macro [`r scriptName`](`r scriptName`).
 The usage of this macro is illustrated in the accompanying PDF file [`r pdfName`](`r pdfName`). 
 The macro will ask the user to select the directory which contains all the raw image files. 
 The following procedures are done:  
@@ -25,10 +27,14 @@ The following procedures are done:
 * Open images one by one: first bright field, then Green, then Red channel images
 * Draw a circular area with a diameter of 13 pixels on the bright field image
 * Open dialogue box and and wait for the user to place the circle over the cell
-* Measure fluorescence intensities on this defined area for teh Green and Red channel image, and measure background intensity levels 100 x 50 pixels adjacent to the cell (unless position is changed by the user)
+* Measure fluorescence intensities on this defined area for the Green and Red channel image, and measure background intensity levels 100 x 50 pixels adjacent to the cell (unless position is changed by the user)
 * Open dialogue box and ask the user for an error report: comment and error type
 * Record the file name, coordinates, size of area, mean intnsity, standard deviation, minimum and maximum intensities and an Error report
 * Repeat the previous steps for every set of three images in the folder
+* Tip: if you change the shape of the circular area by mistake, you can
+  re-create a new one of diameter 13 by opening the _System Clipboard_
+  (File → New → …) and running the command `makeOval(250, 250, 13, 13)`
+  from there.
 
 The Fiji ImageJ macro was run independently by Elo Madissoon, User 1 (file [`r resultsUser1`](`r resultsUser1`))
 and Michael Böttcher, User 2 (file [`r resultsUser2`](`r resultsUser2`)). 

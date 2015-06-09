@@ -1,4 +1,5 @@
 macro "SetArea_Measure"{
+run("Bio-Formats Macro Extensions"); 
 directory=getDirectory("Select a Directory");
 
 //Get the list of all the files in that directory
@@ -11,14 +12,15 @@ for (i = 0; i < lengthOf(files); i++) {
 		if(end == true){
 			//Open bright field image file
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + files[i]);
+			Ext.openImagePlus(directory + "/" + files[i]);
 			
 			//zoom in
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");
 				
-			//Prepare selection: a circle with a diameter of 13
-			makeOval(250, 250, 13, 13);
+			//Prepare selection: a circle with default diameter
+			defaultDiameter = 13; 
+			makeOval(250, 250, defaultDiameter, defaultDiameter);
 			
 			//Ask the user to select cell location. The size of the circle should not change
 			waitForUser("Select cell location with pre-defined circle");
@@ -31,12 +33,12 @@ for (i = 0; i < lengthOf(files); i++) {
 			
 			//Open the file in green channel for analysis
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + substring(files[i], 0, 16) + "_Green.C01");
+			Ext.openImagePlus(directory + "/" + substring(files[i], 0, 16) + "_Green.C01");
 			
 			//Measure the fluorescence at the location of the cell
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");	
-			makeOval(x, y, 13, 13);
+			makeOval(x, y, defaultDiameter, defaultDiameter);
 			waitForUser("Confirm");
 			getStatistics(area, mean, min, max, std);
 			setResult("area", row, area);
@@ -48,7 +50,7 @@ for (i = 0; i < lengthOf(files); i++) {
 			//Measure the background (bg) fluorescence in a different location
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");	
-			makeOval(x-50, y+50, 13, 13);
+			makeOval(x-50, y+50, defaultDiameter, defaultDiameter);
 			waitForUser("Confirm");
 			getSelectionBounds(s,t, wid, hei);
 			setResult("bg_coord_ch2_x", row, s);
@@ -63,10 +65,10 @@ for (i = 0; i < lengthOf(files); i++) {
 			
 			//Repeat the measurement of signal and background in the Red channel image
 			//replace "/" with "\\" if you use the macro on windows
-			open(directory + "/" + substring(files[i], 0, 16) + "_Red.C01");
+			Ext.openImagePlus(directory + "/" + substring(files[i], 0, 16) + "_Red.C01");
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");
-			makeOval(x, y, 13, 13);
+			makeOval(x, y, defaultDiameter, defaultDiameter);
 			waitForUser("Confirm");
 			getStatistics(area, mean, min, max, std);
 			setResult("area_h3", row, area);
@@ -76,7 +78,7 @@ for (i = 0; i < lengthOf(files); i++) {
 			setResult("max_ch3", row, max);
 			makeRectangle(125, 125, 250, 250);
 			run("To Selection");
-			makeOval(x-50, y+50, 13, 13);
+			makeOval(x-50, y+50, defaultDiameter, defaultDiameter);
 			waitForUser("Confirm");
 			getSelectionBounds(s, t, wid, hei);
 			setResult("bg_coord_ch3_x", row, s);
@@ -87,8 +89,10 @@ for (i = 0; i < lengthOf(files); i++) {
 			setResult("bg_std_ch3", row, std);
 			setResult("bg_min_ch3", row, min);
 			setResult("bg_max_ch3", row, max); 
-			
-			//Ask the user for comment and error report
+			close(); 
+
+			//Ask the user for comment and error report, showing brightfield again
+			Ext.openImagePlus(directory + "/" + files[i]);
 			title = "No comment";
 			width = 512; height = 512;
 			Dialog.create("Error report");
