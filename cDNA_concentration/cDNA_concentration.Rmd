@@ -195,23 +195,31 @@ write.csv(file='cDNA_concentration.csv', picogreen, row.names=FALSE)
 
 There is a strong variation between runs.
 
-```{r cDNA_concentration_boxplot, message=FALSE, dev=c("svg", "png"), fig.height=3.5}
+```{r cDNA_concentration_boxplot, message=FALSE, dev=c('svg', 'png', 'postscript'), fig.height=3.5}
 qplot( data=picogreen
      , Run
      , Concentration
-     , geom="boxplot",
-     , colour=Run) + coord_flip()
+     , geom="boxplot"      
+#     , ylab="cDNA concentration (ng/\u03BCL)"
+     , fill=Run) + 
+       coord_flip() + theme_bw() +
+       theme(axis.title = element_text(size=14, family="Helvetica"),
+             axis.text = element_text(size=8, family="Helvetica"),
+             legend.title = element_text(size=12, family="Helvetica") +
+       scale_x_discrete(limits=rev(levels(as.factor(picogreen$Run))))
 ```
 
 Still, for most runs except _1772-064-103_, it is possible to detect
 low-concentration outliers, were there probably was no cell in the chamber.
 Note that the scale of each histogram is different.
 
-```{r cDNA_concentration_histogram, message=FALSE, dev=c("svg", "png"), fig.height=3.5}
+```{r cDNA_concentration_histogram, message=FALSE, dev=c('svg', 'png'), fig.height=3.5}
 qplot( data=picogreen
      , Concentration
      , geom="histogram"
-     , colour=Run) + facet_wrap( ~Run, scales='free')
+#     , xlab="Concentration (ng/\u03BCL)"
+     , colour=Run) + 
+       facet_wrap( ~Run, scales='free')
 ```
 
 <a name='standard-curves'>Comparison between standard curves</a>

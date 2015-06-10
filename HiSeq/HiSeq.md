@@ -19,7 +19,7 @@ Summary
 Datasets
 --------
 
-The `Demultiplex_Stats.htm` files from the _Basecall Stats_ directory of the
+The `Demultiplex_Stats.html` files from the _Basecall Stats_ directory of the
 HiSeq runs were copied and renamed with their run ID, opened in a web browser,
 and the table inside was pasted in LibreOffice, edited and saved in _xslx_
 format before loading into `R`.
@@ -177,16 +177,28 @@ are few points per run (8 for columns and 12 for rows).
 
 
 ```r
-qplot(data = qc[!is.na(qc$Well),], Row, Reads, geom = "boxplot") + facet_wrap(~Run)
+qplot(data = qc[!is.na(qc$Well),], Row, Reads, geom = "boxplot") +
+  facet_wrap(~Run) + theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none") + 
+  geom_boxplot(data=qc[!is.na(qc$Well),], aes(x = Row, y = Reads, fill=Run))
 ```
 
-![plot of chunk HiSeq_plate_comparison](figure/HiSeq_plate_comparison-1.png) 
+![plot of chunk HiSeq_plate_comparison_row](figure/HiSeq_plate_comparison_row-1.png) 
 
 ```r
-qplot(data = qc[!is.na(qc$Well),], Column, Reads, geom = "boxplot") + facet_wrap(~Run)
+qplot(data = qc[!is.na(qc$Well),], Column, Reads, geom = "boxplot") + 
+  facet_wrap(~Run) + theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none") + 
+  geom_boxplot(data=qc[!is.na(qc$Well),], aes(x = Column, y = Reads, fill=Run)) +
+  geom_boxplot(data=qc[!is.na(qc$Well) & qc$Run == '1772-064-103' & qc$Column == '08',], aes(x = Column, y = Reads), fill="red",     outlier.colour = "red") +
+  geom_boxplot(data=qc[!is.na(qc$Well) & qc$Run == '1772-064-103' & qc$Column == '09',], aes(x = Column, y = Reads), fill="red", outlier.colour = "red")
 ```
 
-![plot of chunk HiSeq_plate_comparison](figure/HiSeq_plate_comparison-2.png) 
+![plot of chunk HiSeq_plate_comparison_column](figure/HiSeq_plate_comparison_column-1.png) 
 
 In C1 run `1772-064-103`, the plate column `09` has clearly been pipetted in
 row `08`.  Both of them are flagged `FALSE` in a table column called `HiSeq_QC`
