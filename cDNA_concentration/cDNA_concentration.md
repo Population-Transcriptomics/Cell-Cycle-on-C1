@@ -259,11 +259,98 @@ write.csv(file='cDNA_concentration.csv', picogreen, row.names=FALSE)
 There is a strong variation between runs.
 
 
+```r
+qplot( data=picogreen
+     , Run
+     , Concentration
+     , geom="boxplot"      
+#     , ylab="cDNA concentration (ng/\u03BCL)"
+     , fill=Run) + 
+       coord_flip() + theme_bw() +
+       theme(axis.title = element_text(size=14, family="Helvetica"),
+             axis.text = element_text(size=8, family="Helvetica"),
+             legend.title = element_text(size=12, family="Helvetica")) +
+       scale_x_discrete(limits=rev(levels(as.factor(picogreen$Run))))
+```
+
+![plot of chunk cDNA_concentration_boxplot](figure/cDNA_concentration_boxplot-1.png) 
+
+Still, for most runs except _1772-064-103_, it is possible to detect
+low-concentration outliers, were there probably was no cell in the chamber.
+Note that the scale of each histogram is different.
 
 
+```r
+qplot( data=picogreen
+     , Concentration
+     , geom="histogram"
+#     , xlab="Concentration (ng/\u03BCL)"
+     , colour=Run) + 
+       facet_wrap( ~Run, scales='free')
+```
+
+![plot of chunk cDNA_concentration_histogram](figure/cDNA_concentration_histogram-1.png) 
+
+<a name='standard-curves'>Comparison between standard curves</a>
+----------------------------------------------------------------
+
+Load the data from all runs.
 
 
+```r
+for (RUN in RUNS) {
+    if (!exists("sc")) {
+        sc <- read_sc(RUN)
+    } else {
+        sc <- rbind(sc, read_sc(RUN))
+    }
+}
+```
+
+While the DNA concentrations in `1772-062-248` might have been overestimated
+as suggested by the shifted standard curve, overall the calibration of the
+fluorometer is stable and does not explain the strong variations of the DNA
+yield. 
 
 
+```r
+ggplot(
+  sc,
+  aes(
+    x=fluorescence,
+    y=dna,
+    colour=Run)
+) + geom_point() +
+    geom_line() + 
+    scale_x_log10('Average fluorescence (background subtracted)') +
+    scale_y_log10('DNA concentration (ng/\u03BCL)')
+```
+
+![plot of chunk cDNA_concentration_standard_curves](figure/cDNA_concentration_standard_curves-1.png) 
+
+Session Info
+------------
 
 
+```r
+sessionInfo()
+```
+
+```
+## R version 3.1.0 (2014-04-10)
+## Platform: x86_64-apple-darwin13.1.0 (64-bit)
+## 
+## locale:
+## [1] C
+## 
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+## [1] reshape_0.8.5 ggplot2_1.0.0 gdata_2.13.3 
+## 
+## loaded via a namespace (and not attached):
+##  [1] MASS_7.3-35      Rcpp_0.11.3      colorspace_1.2-4 digest_0.6.6     evaluate_0.5.5   formatR_1.0     
+##  [7] grid_3.1.0       gtable_0.1.2     gtools_3.4.1     knitr_1.8        labeling_0.3     munsell_0.4.2   
+## [13] plyr_1.8.1       proto_0.3-10     reshape2_1.4.1   scales_0.2.4     stringr_0.6.2    tools_3.1.0
+```

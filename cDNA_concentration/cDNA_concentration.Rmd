@@ -205,7 +205,7 @@ qplot( data=picogreen
        coord_flip() + theme_bw() +
        theme(axis.title = element_text(size=14, family="Helvetica"),
              axis.text = element_text(size=8, family="Helvetica"),
-             legend.title = element_text(size=12, family="Helvetica") +
+             legend.title = element_text(size=12, family="Helvetica")) +
        scale_x_discrete(limits=rev(levels(as.factor(picogreen$Run))))
 ```
 
@@ -252,7 +252,7 @@ ggplot(
 ) + geom_point() +
     geom_line() + 
     scale_x_log10('Average fluorescence (background subtracted)') +
-    scale_y_log10('DNA concentration (ng/μL)')
+    scale_y_log10('DNA concentration (ng/\u03BCL)')
 ```
 
 Session Info
