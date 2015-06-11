@@ -127,9 +127,23 @@ qplot(data = qc[!is.na(qc$Well),], Run, Reads, geom = "boxplot")
 Do not worry too much about the shape of the boxplots, this is because there
 are few points per run (8 for columns and 12 for rows).
 
-```{r HiSeq_plate_comparison, dev=c("svg", "png")}
-qplot(data = qc[!is.na(qc$Well),], Row, Reads, geom = "boxplot") + facet_wrap(~Run)
-qplot(data = qc[!is.na(qc$Well),], Column, Reads, geom = "boxplot") + facet_wrap(~Run)
+```{r HiSeq_plate_comparison_row, dev=c("svg", "png", 'postscript'), fig.height=6.0}
+qplot(data = qc[!is.na(qc$Well),], Row, Reads, geom = "boxplot") +
+  facet_wrap(~Run) + theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none") + 
+  geom_boxplot(data=qc[!is.na(qc$Well),], aes(x = Row, y = Reads, fill=Run))
+```
+```{r HiSeq_plate_comparison_column, dev=c("svg", "png", 'postscript'), fig.height=6.0}
+qplot(data = qc[!is.na(qc$Well),], Column, Reads, geom = "boxplot") + 
+  facet_wrap(~Run) + theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none") + 
+  geom_boxplot(data=qc[!is.na(qc$Well),], aes(x = Column, y = Reads, fill=Run)) +
+  geom_boxplot(data=qc[!is.na(qc$Well) & qc$Run == '1772-064-103' & qc$Column == '08',], aes(x = Column, y = Reads), fill="red",     outlier.colour = "red") +
+  geom_boxplot(data=qc[!is.na(qc$Well) & qc$Run == '1772-064-103' & qc$Column == '09',], aes(x = Column, y = Reads), fill="red", outlier.colour = "red")
 ```
 
 In C1 run `1772-064-103`, the plate column `09` has clearly been pipetted in

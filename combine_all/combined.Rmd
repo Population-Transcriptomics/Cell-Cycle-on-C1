@@ -115,9 +115,16 @@ qplot(data = qc, Error, mean_ch2 + mean_ch3, geom = "boxplot"
 
 #### <a name='no-cell_DNA-yield'>DNA concentration.</a>
 
-```{r qc_concentration_by_errortype, dev=c('svg', 'png')}
-qplot(data = qc, Error, Concentration, geom = "boxplot"
-) + facet_wrap(~Run, scales = "free") + ggtitle('DNA concentration by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('DNA yield (ng/nL)')
+```{r qc_concentration_by_errortype, dev=c('svg', 'png', 'postscript'), fig.height=6.0}
+qplot(data = qc, Error, Concentration, geom = "boxplot", fill=Run) + 
+  facet_wrap(~Run, scales = "fixed") + 
+#  ggtitle('cDNA concentration by error type') + 
+#  scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + 
+  scale_y_continuous('cDNA concentration') +
+  theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none")
 ```
 [Back to top](#top)
 
@@ -132,8 +139,16 @@ qplot(data = qc, Error, rRNA_18S, geom = "boxplot"
 
 #### <a name='no-cell_spikes'>Spike 1.</a>
 
-```{r qc_spike1_by_errortype, dev=c('svg', 'png')}
-qplot(data = qc, Error, SPIKE_1, geom = "boxplot") + facet_wrap(~Run, scales = "free") + ggtitle('Spike 1 by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('Spike 1 (CPM)')
+```{r qc_spike1_by_errortype, dev=c('svg', 'png', 'postscript'), fig.height=6.0}
+qplot(data = qc, Error, SPIKE_1, geom = "boxplot", fill=Run) + 
+  facet_wrap(~Run, scales = "fixed") + 
+#  ggtitle('Spike 1 by error type') + 
+#  scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + 
+  scale_y_continuous('Spike 1 (CPM)') +
+  theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none")
 ```
 
 #### <a name='no-cell_Nextera'>Nextera primers.</a>

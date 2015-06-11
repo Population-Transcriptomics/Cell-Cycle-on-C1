@@ -136,8 +136,15 @@ qplot(data = qc, Error, mean_ch2 + mean_ch3, geom = "boxplot"
 
 
 ```r
-qplot(data = qc, Error, Concentration, geom = "boxplot"
-) + facet_wrap(~Run, scales = "free") + ggtitle('DNA concentration by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('DNA yield (ng/nL)')
+qplot(data = qc, Error, Concentration, geom = "boxplot", fill=Run) + 
+  facet_wrap(~Run, scales = "fixed") + 
+#  ggtitle('cDNA concentration by error type') + 
+#  scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + 
+  scale_y_continuous('cDNA concentration') +
+  theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none")
 ```
 
 ![plot of chunk qc_concentration_by_errortype](figure/qc_concentration_by_errortype-1.png) 
@@ -163,7 +170,15 @@ qplot(data = qc, Error, rRNA_18S, geom = "boxplot"
 
 
 ```r
-qplot(data = qc, Error, SPIKE_1, geom = "boxplot") + facet_wrap(~Run, scales = "free") + ggtitle('Spike 1 by error type') + scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + scale_y_continuous('Spike 1 (CPM)')
+qplot(data = qc, Error, SPIKE_1, geom = "boxplot", fill=Run) + 
+  facet_wrap(~Run, scales = "fixed") + 
+#  ggtitle('Spike 1 by error type') + 
+#  scale_x_discrete('Error type: 0 = cell present; 1 = cell absent; 2 = debris; 3 = wrong focus; 4 = more than 1 cell') + 
+  scale_y_continuous('Spike 1 (CPM)') +
+  theme_bw() +
+  theme(axis.title = element_text(size=14, family="Helvetica"),
+        axis.text = element_text(size=8, family="Helvetica"),
+        legend.position="none")
 ```
 
 ```

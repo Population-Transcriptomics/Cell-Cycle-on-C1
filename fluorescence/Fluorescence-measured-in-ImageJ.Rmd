@@ -141,11 +141,11 @@ par(mfrow <- c(2,2))
 mar.orig <- par(mar=c(5.1, 10.0, 4.1, 2.1))
 
 flBoxplot <- function (DATA){
-  title.2=paste("Fluorescence by ", deparse(substitute(DATA)),", green",sep="")
-  title.3=paste("Fluorescence by ", deparse(substitute(DATA)),", red",sep="")
-  y=c(as.character(DATA[,"Error"]), rep("background", nrow(DATA)))
-  x.ch2=c(DATA[,"mean_ch2"],DATA[,"bg_mean_ch2"])
-  x.ch3=c(DATA[,"mean_ch3"],DATA[,"bg_mean_ch3"])
+  title.2 <- paste("Fluorescence by ", deparse(substitute(DATA)),", green",sep="")
+  title.3 <- paste("Fluorescence by ", deparse(substitute(DATA)),", red",sep="")
+  y <- c(as.character(DATA[,"Error"]), rep("background", nrow(DATA)))
+  x.ch2 <- c(DATA[,"mean_ch2"], DATA[,"bg_mean_ch2"])
+  x.ch3 <- c(DATA[,"mean_ch3"], DATA[,"bg_mean_ch3"])
   boxplot( x.ch2~y, main=title.2, las=1, horizontal=TRUE)
   boxplot( x.ch3~y, main=title.3, las=1, horizontal=TRUE)
 }
@@ -175,7 +175,7 @@ differ <- cbind(cell=as.character(user1$cell_id), user1.comment = as.character(u
 difference <- differ[(differ[,"user1.error"] == "0-No Error") | (differ[,"user2.error"] == "0-No Error"),]
 levels(as.factor(difference[,"user1.comment"]))
 length(levels(as.factor(difference[,"user2.comment"])))
-d=data.frame(difference[order(difference[,"user1.error"]),-2])
+d <- data.frame(difference[order(difference[,"user1.error"]),-2])
 d
 ```
 
