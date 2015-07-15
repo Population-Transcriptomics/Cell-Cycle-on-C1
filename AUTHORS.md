@@ -20,6 +20,6 @@ This repository contains the contributions of the following people
 
  * Charles Plessy <plessy@riken.jp> drafted the analysis on our Intranet, in
    particular on the [fluorescence](fluorescence) values measured with the
-   Cellomics software, the [cDNA yields](cDNA)_concentration) measured by
+   Cellomics software, the [cDNA yields](cDNA_concentration) measured by
    fluorometry, the quantification of [control RNA sequences](control-sequences),
    and the [combined analysis](combine_all) of this.
