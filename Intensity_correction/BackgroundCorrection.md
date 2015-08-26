@@ -499,7 +499,6 @@ final <- contrastFucci(data=step3, channel="Ch3")
 correctedFluo <- data.frame(final$samples, final$batch, final$RGexprs[,1:4], exp(final$exprs), final$corrected.exprs, final$corrected.transformed.exprs, final$mixesCh2, final$mixesCh3, final$model.residuals)
 names(correctedFluo) <- c("cell_id", "batch", "Ch2_foreground", "Ch2_background", "Ch3_foreground", "Ch3_background",
 "Ch2_unadjusted", "Ch3_unadjusted", "ch2_corrected", "ch3_corrected", "ch2_corrected_transformed", "ch3_corrected_transformed", "Ch2_mix_components", "Ch3_mix_components", "Ch2_flexmix_residuals", "Ch3_flexmix_residuals")
-write.csv(correctedFluo, "correctedIntensities.csv", row.names=F)
 ```
 
 The last section uses the data with a simplified model and compares the result with the flexmix model results above.
@@ -538,6 +537,8 @@ resids <- matrix(cbind(l1$residuals, l2$residuals), ncol=2)
 correctedFluo <- data.frame(correctedFluo, Ch2_corrected_transformed_anova=signals[, 1], 
 Ch3_corrected_transformed_anova=signals[, 2], Ch2_residuals_anova=resids[, 1], 
 Ch3_residuals_anova=resids[, 2])
+#
+write.csv(correctedFluo, "correctedIntensities.csv", row.names=F)
 ```
 
 
