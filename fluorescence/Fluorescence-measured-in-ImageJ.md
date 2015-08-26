@@ -17,18 +17,24 @@ Images of *Fucci* cells loaded in the C1 capture array, were taken before cell l
 Three modes have been used for imaging: bright field (BF), Green and Red. 
 [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the
 Cellomics specific C01 format were used for measuring fluorescence intensities and reporting errors in 
-[Fiji ImageJ](http://fiji.sc/Fiji). All platforms version by using the macro [SetArea_Measure_UserConfirm.ijm](SetArea_Measure_UserConfirm.ijm).
+[Fiji ImageJ](http://fiji.sc/Fiji) (plain ImageJ users need to install the
+[Bio-Formats](https://www.openmicroscopy.org/site/support/bio-formats) plugin).
+All platforms version by using the macro [SetArea_Measure_UserConfirm.ijm](SetArea_Measure_UserConfirm.ijm).
 The usage of this macro is illustrated in the accompanying PDF file [Usage_of_ImageJ_macro_SetArea_Measure_UserConfirm.pdf](Usage_of_ImageJ_macro_SetArea_Measure_UserConfirm.pdf). 
 The macro will ask the user to select the directory which contains all the raw image files. 
 The following procedures are done:  
 
 * Open images one by one: first bright field, then Green, then Red channel images
-* Draw a circular area with a diameter of 13 pixels on the bright field image
+* Draw a circular area with a diameter of 13 pixels on the bright field image.  For other projects, if the circle is too small, edit the macro to increase the variable `defaultDiameter`, for example to 30.
 * Open dialogue box and and wait for the user to place the circle over the cell
-* Measure fluorescence intensities on this defined area for teh Green and Red channel image, and measure background intensity levels 100 x 50 pixels adjacent to the cell (unless position is changed by the user)
+* Measure fluorescence intensities on this defined area for the Green and Red channel image, and measure background intensity levels 100 x 50 pixels adjacent to the cell (unless position is changed by the user)
 * Open dialogue box and ask the user for an error report: comment and error type
 * Record the file name, coordinates, size of area, mean intnsity, standard deviation, minimum and maximum intensities and an Error report
 * Repeat the previous steps for every set of three images in the folder
+* Tip: if you change the shape of the circular area by mistake, you can
+  re-create a new one of diameter 13 by opening the _System Clipboard_
+  (File → New → …) and running the command `makeOval(250, 250, 13, 13)`
+  from there.
 
 The Fiji ImageJ macro was run independently by Elo Madissoon, User 1 (file [Results_SetArea_Measure_UserConfirm_User1.txt](Results_SetArea_Measure_UserConfirm_User1.txt))
 and Michael Böttcher, User 2 (file [Results_SetArea_Measure_UserConfirm_User2.txt](Results_SetArea_Measure_UserConfirm_User2.txt)). 
@@ -53,7 +59,7 @@ Size of the selection area.
 ### `mean`, `std`, `min`, `max`
 
 mean, standard deviation, minimum and maximum fluorescence intensity in the selection. 
-Corresponding measurements to the background area (adjacent to the cell) when prefix is "bg." 
+Corresponding measurements to the background area (adjacent to the cell) when prefix is ".bg" 
 and to green channel or red channel when the suffix is ".ch2" or ".ch3" correspondingly.
 
 ### `Error`
@@ -168,11 +174,11 @@ par(mfrow <- c(2,2))
 mar.orig <- par(mar=c(5.1, 10.0, 4.1, 2.1))
 
 flBoxplot <- function (DATA){
-  title.2=paste("Fluorescence by ", deparse(substitute(DATA)),", green",sep="")
-  title.3=paste("Fluorescence by ", deparse(substitute(DATA)),", red",sep="")
-  y=c(as.character(DATA[,"Error"]), rep("background", nrow(DATA)))
-  x.ch2=c(DATA[,"mean_ch2"],DATA[,"bg_mean_ch2"])
-  x.ch3=c(DATA[,"mean_ch3"],DATA[,"bg_mean_ch3"])
+  title.2 <- paste("Fluorescence by ", deparse(substitute(DATA)),", green",sep="")
+  title.3 <- paste("Fluorescence by ", deparse(substitute(DATA)),", red",sep="")
+  y <- c(as.character(DATA[,"Error"]), rep("background", nrow(DATA)))
+  x.ch2 <- c(DATA[,"mean_ch2"], DATA[,"bg_mean_ch2"])
+  x.ch3 <- c(DATA[,"mean_ch3"], DATA[,"bg_mean_ch3"])
   boxplot( x.ch2~y, main=title.2, las=1, horizontal=TRUE)
   boxplot( x.ch3~y, main=title.3, las=1, horizontal=TRUE)
 }
@@ -241,7 +247,7 @@ length(levels(as.factor(difference[,"user2.comment"])))
 ```
 
 ```r
-d=data.frame(difference[order(difference[,"user1.error"]),-2])
+d <- data.frame(difference[order(difference[,"user1.error"]),-2])
 d
 ```
 

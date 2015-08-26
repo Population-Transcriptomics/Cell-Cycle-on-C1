@@ -59,7 +59,7 @@ Size of the selection area.
 ### `mean`, `std`, `min`, `max`
 
 mean, standard deviation, minimum and maximum fluorescence intensity in the selection. 
-Corresponding measurements to the background area (adjacent to the cell) when prefix is "bg." 
+Corresponding measurements to the background area (adjacent to the cell) when prefix is ".bg" 
 and to green channel or red channel when the suffix is ".ch2" or ".ch3" correspondingly.
 
 ### `Error`
