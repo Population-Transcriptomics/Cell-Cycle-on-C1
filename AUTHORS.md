@@ -8,7 +8,7 @@ This repository contains the contributions of the following people
 
  * Michael Böttcher <michael.bottcher@riken.jp> managed the download and renaming
    of FASTQ files from [DDBJ](DDBJ), the renaming and submitting the Cellomics image
-   files to Dryad (http://dx.doi.org/10.5061/dryad.1d74h/1), drafting the manuscript and was involved in
+   files to Dryad (http://dx.doi.org/10.5061/dryad.1d74h), drafting the manuscript and was involved in
    critical reviewing of all scripts.
 
  * Elo Madissoon <elo.madissoon@gmail.com> wrote the ImageJ macro, used this 
