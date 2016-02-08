@@ -17,8 +17,9 @@ Images of *Fucci* cells loaded in the C1 capture array, were taken before cell l
 Three modes have been used for imaging: bright field (BF), Green and Red. 
 [Raw images](https://briefcase.riken.jp/public/mAF8gAzoLsdAVPwBXp1LS5HJzGlicAWQZwlMer8hKu5U) in the
 Cellomics specific C01 format were used for measuring fluorescence intensities and reporting errors in 
-[Fiji ImageJ](http://fiji.sc/Fiji) (plain ImageJ users need to install the
-[Bio-Formats](https://www.openmicroscopy.org/site/support/bio-formats) plugin).
+[Fiji ImageJ](http://fiji.sc/Fiji). Plain ImageJ users need to install the
+[Bio-Formats](https://www.openmicroscopy.org/site/support/bio-formats) plugin and can
+open the files with commands such as `imagej -e 'run("Bio-Formats Macro Extensions"); Ext.openImagePlus("1772-062-248_A01_BF.C01")'`.
 All platforms version by using the macro [`r scriptName`](`r scriptName`).
 The usage of this macro is illustrated in the accompanying PDF file [`r pdfName`](`r pdfName`). 
 The macro will ask the user to select the directory which contains all the raw image files. 
