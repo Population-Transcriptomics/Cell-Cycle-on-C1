@@ -3,6 +3,8 @@ Cell-Cycle-on-C1
 
 _Single-cell transcriptome analysis by fluorescence labeling_.
 
+See our preprint on [bioRxiv](http://biorxiv.org/content/early/2016/12/15/088500).
+
 This repository contains source code and explanations on how to control quality
 in transcriptome analysis of fluorescent cells in the [Fluidigm C1
 platform](https://www.fluidigm.com/products/c1-system).  These explanations
