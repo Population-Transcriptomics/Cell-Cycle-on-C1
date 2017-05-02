@@ -10,5 +10,5 @@ $(TARGET): $(TARGET).html
 
 %.html: %.Rmd
 	/usr/bin/Rscript -e "knitr::knit2html('$<')"
-	sed -i '' -e 's/\.Rmd/\.md/g' -e '/\!\[plot/s/svg/png/' $*.md
-	sed -i '' -e 's/\.Rmd/\.html/g' $@
+	perl -i -pe 's/\.Rmd/\.md/g ; m/\!\[plot/ && s/svg/png/' $*.md
+	perl -i -pe 's/\.Rmd/\.html/g' $@
