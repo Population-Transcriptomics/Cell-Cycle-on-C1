@@ -438,64 +438,83 @@ Ch3_residuals_anova=resids[, 2])
 write.csv(correctedFluo, "correctedIntensities.csv", row.names=F)
 ```
 
-```{r density and residual histogram plots}
-# the data of interest
-x <- correctedFluo
+Function to plot figures A to F.
 
-pdf(file="densities.pdf")
+```{r}
+plotRunsDensities <- function (columnName, xlab, main, legendTitle) {
+  xyscale <- density(correctedFluo[which(correctedFluo$batch==1),columnName])
+  plot( xyscale
+      , ylim=c(0, max(xyscale$y) * 1.1)
+      , col=1
+      , xlab=xlab
+      , main=main
+      , type='n')
 
-yscale <- density(x$Ch2_unadjusted[which(x$batch==1)])
-plot(density(x$Ch2_unadjusted[which(x$batch==1)]), ylim=c(0, max(yscale$y)), col=1, xlab="Unadjusted log-signal", main="Figure A: Densities of unadjusted Ch2 signals")
-lines(density(x$Ch2_unadjusted[which(x$batch==2)]), col=2)
-lines(density(x$Ch2_unadjusted[which(x$batch==3)]), col=3)
-lines(density(x$Ch2_unadjusted[which(x$batch==4)]), col=4)
-lines(density(x$Ch2_unadjusted[which(x$batch==5)]), col=5)
-legend("topright", title="Ch2 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+  linesDensity <- function (runNumber, columnName)
+    lines( density(correctedFluo[ which(correctedFluo$batch==runNumber)
+                                , columnName])
+         , col=runNumber)
 
-plot(density(x$Ch3_unadjusted[which(x$batch==1)]), ylim=c(0, 1), xlab="Unadjusted log-signal", col=1, main="Figure B: Densities of unadjusted Ch3 signals")
-lines(density(x$Ch3_unadjusted[which(x$batch==2)]), col=2)
-lines(density(x$Ch3_unadjusted[which(x$batch==3)]), col=3)
-lines(density(x$Ch3_unadjusted[which(x$batch==4)]), col=4)
-lines(density(x$Ch3_unadjusted[which(x$batch==5)]), col=5)
-legend("topleft", title="Ch3 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+  sapply(1:5,linesDensity, columnName=columnName)
 
-plot(density(x$ch2_corrected_transformed[which(x$batch==1)]), col=1, ylim=c(0, 1), xlab="Adjusted log-signal", main="Figure C: Densities of adjusted Ch2 signals (Flexmix)")
-lines(density(x$ch2_corrected_transformed[which(x$batch==2)]), col=2)
-lines(density(x$ch2_corrected_transformed[which(x$batch==3)]), col=3)
-lines(density(x$ch2_corrected_transformed[which(x$batch==4)]), col=4)
-lines(density(x$ch2_corrected_transformed[which(x$batch==5)]), col=5)
-legend("topright", title="Ch2 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+  legend("topright", title=legendTitle, c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+}
+```
 
-plot(density(x$ch3_corrected_transformed[which(x$batch==1)]), col=1, ylim=c(0, 1), xlab="Adjusted log-signal", main="Figure D: Densities of adjusted Ch3 signals (Flexmix)")
-lines(density(x$ch3_corrected_transformed[which(x$batch==2)]), col=2)
-lines(density(x$ch3_corrected_transformed[which(x$batch==3)]), col=3)
-lines(density(x$ch3_corrected_transformed[which(x$batch==4)]), col=4)
-lines(density(x$ch3_corrected_transformed[which(x$batch==5)]), col=5)
-legend("topright", title="Ch3 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+Figures A to F
 
-plot(density(x$Ch2_corrected_transformed_anova[which(x$batch==1)]), col=1, ylim=c(0, 0.6), xlab="Adjusted log-signal", main="Figure E: Densities of adjusted Ch2 signals (1-way ANOVA)")
-lines(density(x$Ch2_corrected_transformed_anova[which(x$batch==2)]), col=2)
-lines(density(x$Ch2_corrected_transformed_anova[which(x$batch==3)]), col=3)
-lines(density(x$Ch2_corrected_transformed_anova[which(x$batch==4)]), col=4)
-lines(density(x$Ch2_corrected_transformed_anova[which(x$batch==5)]), col=5)
-legend("topright", title="Ch2 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+```{r figure A, dev=c("svg", "png")}
+plotRunsDensities("Ch2_unadjusted"
+                 , xlab="Unadjusted log-signal"
+                 , main="Figure A: Densities of unadjusted Ch2 signals"
+                 , legendTitle="Ch2 signals")
+```
 
-plot(density(x$Ch3_corrected_transformed_anova[which(x$batch==1)]), col=1, ylim=c(0, 0.6), xlab="Adjusted log-signal", main="Figure F: Densities of adjusted Ch3 signals (1-way ANOVA)")
-lines(density(x$Ch3_corrected_transformed_anova[which(x$batch==2)]), col=2)
-lines(density(x$Ch3_corrected_transformed_anova[which(x$batch==3)]), col=3)
-lines(density(x$Ch3_corrected_transformed_anova[which(x$batch==4)]), col=4)
-lines(density(x$Ch3_corrected_transformed_anova[which(x$batch==5)]), col=5)
-legend("topright", title="Ch3 signals", c("1772-062-248", "1772-062-249", "1772-064-103", "1772-067-038", "1772-067-039"), lty=1, col=1:5, cex=0.75)
+```{r figure B, dev=c("svg", "png")}
+plotRunsDensities("Ch3_unadjusted"
+                 , "Unadjusted log-signal"
+                 , "Figure B: Densities of unadjusted Ch3 signals"
+                 , "Ch3 signals")
+```
 
+```{r figure C, dev=c("svg", "png")}
+plotRunsDensities( "ch2_corrected_transformed"
+                 , "Adjusted log-signal"
+                 , "Figure C: Densities of adjusted Ch2 signals (Flexmix)"
+                 , "Ch2 signals")
+```
 
-#residual histograms}
-r1 <- c(x$Ch2_residuals_anova)
+```{r figureD, dev=c("svg", "png")}
+plotRunsDensities( "ch3_corrected_transformed"
+                 , "Adjusted log-signal"
+                 , "Figure D: Densities of adjusted Ch3 signals (Flexmix)"
+                 , "Ch3 signals")
+```
+
+```{r figureE, dev=c("svg", "png")}
+plotRunsDensities( "Ch2_corrected_transformed_anova"
+                 , "Adjusted log-signal"
+                 , "Figure E: Densities of adjusted Ch2 signals (1-way ANOVA)"
+                 , "Ch2 signals")
+```
+
+```{r figureF, dev=c("svg", "png")}
+plotRunsDensities( "Ch3_corrected_transformed_anova"
+                 , "Adjusted log-signal"
+                 , "Figure F: Densities of adjusted Ch3 signals (1-way ANOVA)"
+                 , "Ch3 signals")
+```
+
+Residual histograms (figures H and G)
+
+```{r figureH, dev=c("svg", "png")}
+r1 <- c(correctedFluo$Ch2_residuals_anova)
 ks1 <- round(ks.test(r1, "pnorm", 0, sqrt(var(r1)))$p.value, 6)
 hist(r1, br=110, main="Figure G: Residuals of 1-way ANOVA adjustment", xlab="Residuals", sub=paste("KS-test: ", ks1, sep=""), xlim=c(-15,5))
+```
 
-r2 <- c(x$Ch2_flexmix_residuals)
+```{r figureG, dev=c("svg", "png")}
+r2 <- c(correctedFluo$Ch2_flexmix_residuals)
 ks2 <- round(ks.test(r2, "pnorm", 0, sqrt(var(r2)))$p.value, 6)
 hist(r2, br=110, main="Figure H: Residuals of Flexmix adjustment", xlab="Residuals", sub=paste("KS-test: ", ks2, sep=""), xlim=c(-1,1)) 
-
-dev.off()
 ```
